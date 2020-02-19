@@ -2,7 +2,7 @@
 mod function;
 
 pub type Function = function::Function;
-pub type Operation = function::Operation;
+pub type Operation = function::op::Operation;
 
 pub struct StackMachine {
     pub stack: Vec<u32>,
@@ -12,12 +12,10 @@ pub struct StackMachine {
 }
 
 impl StackMachine {
-    #[allow(dead_code)]
     pub fn pop(&mut self) -> Option<u32> {
         return self.stack.pop();
     }
 
-    #[allow(dead_code)]
     pub fn push(&mut self, item: u32) {
         return self.stack.push(item);
     }
@@ -55,10 +53,13 @@ impl StackMachine {
         };
     }
 
-    pub fn execute(&mut self, code: Vec<(Operation, Option<u32>)>) {
-        for line in code {
-            // println!("Stack: {:?}", self.stack);
-            match line.0 {
+    pub fn execute(&mut self, mut code: Vec<(Operation, Option<u32>)>) {
+
+        // To use pop
+        let mut code: Vec<_> = code.iter().rev().collect();
+
+        while let Some((op, arg)) = code.pop() {
+            match op {
                 Operation::Add => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
@@ -80,13 +81,13 @@ impl StackMachine {
                     self.div(a, b);
                 },
                 Operation::Const => {
-                    self.push(line.1.unwrap());
+                    self.push(arg.unwrap());
                 },
                 Operation::Call => {
-                    self.call_func(line.1.unwrap() as u8);
+                    self.call_func(arg.unwrap() as u8);
                 },
                 Operation::CallExt => {
-                    self.call_func_ext(line.1.unwrap() as u8);
+                    self.call_func_ext(arg.unwrap() as u8);
                 },
                 Operation::Print => {
                     println!("{}", self.pop().unwrap());
