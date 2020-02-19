@@ -14,6 +14,13 @@ pub mod op {
         Break,
         CallExt,
         Call,
+        Fork,
+        Equal,
+        NotEqual,
+        If,
+        EndIf,
+        Function,
+        EndFunction,
     }
 }
 

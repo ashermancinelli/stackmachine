@@ -1,4 +1,6 @@
 
+use std::thread;
+
 mod function;
 
 pub type Function = function::Function;
@@ -55,10 +57,10 @@ impl StackMachine {
 
     pub fn execute(&mut self, mut code: Vec<(Operation, Option<u32>)>) {
 
-        // To use pop
-        code.reverse();
+        let index = 0;
 
-        while let Some((op, arg)) = code.pop() {
+        loop {
+            let (op, arg) = code[index];
             match op {
                 Operation::Add => {
                     let a = self.pop().unwrap();
@@ -80,6 +82,24 @@ impl StackMachine {
                     let b = self.pop().unwrap();
                     self.div(a, b);
                 },
+                Operation::Equal => {
+                    let a = self.pop().unwrap();
+                    let b = self.pop().unwrap();
+                    self.push(a == b ? 1 : 0);
+                },
+                Operation::NotEqual => {
+                    let a = self.pop().unwrap();
+                    let b = self.pop().unwrap();
+                    self.push(a != b ? 1 : 0);
+                },
+                Operation::Function => {
+                },
+                Operation::EndFunction => {
+                },
+                Operation::If => {
+                },
+                Operation::EndIf => {
+                },
                 Operation::Const => {
                     self.push(arg.unwrap());
                 },
@@ -88,6 +108,16 @@ impl StackMachine {
                 },
                 Operation::CallExt => {
                     self.call_func_ext(arg.unwrap() as u8);
+                },
+                Operation::Fork => {
+                    let mut child = self.clone();
+                    child.push(1);
+                    self.push(0);
+                    let mut _code = code.clone()[index..];
+                    
+                    thread::spawn(move || {
+                        child.execute(_code);
+                    });
                 },
                 Operation::Print => {
                     println!("{}", self.pop().unwrap());

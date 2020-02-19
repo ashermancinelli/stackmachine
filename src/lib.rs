@@ -81,4 +81,23 @@ pub mod tests {
 
         assert_eq!(Some(9), sm.pop());
     }
+
+    #[test]
+    fn test_fork() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.ext_functions = vec![
+            Box::new(| s: &StackMachine | {
+                println!("Stack is {:?}", s.stack);
+            }),
+        ];
+
+        sm.execute(vec![
+            (Op::Const,     Some(6u32)),
+            (Op::Const,     Some(3u32)),
+            (Op::CallExt,   Some(0)),
+            (Op::Fork,      Some(0)),
+            (Op::Add,       None),
+        ]);
+    }
 }
