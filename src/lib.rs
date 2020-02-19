@@ -5,7 +5,8 @@ mod stackmachine;
 pub mod tests {
 
     use super::stackmachine::StackMachine;
-    type Op = super::stackmachine::Operations;
+    use super::stackmachine::Operation as Op;
+    use super::stackmachine::Function;
 
     #[test]
     pub fn test_add() {
@@ -53,5 +54,31 @@ pub mod tests {
         ]);
 
         assert_eq!(Some(0), sm.pop());
+    }
+
+    #[test]
+    pub fn test_call() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.ext_functions = vec![
+            Box::new(| s: &StackMachine | {
+                println!("Stack is {:?}", s.stack);
+            }),
+        ];
+
+        sm.function_table = vec![
+            Function::new(vec![
+                (Op::Add,   None),
+            ]),
+        ];
+
+        sm.execute(vec![
+            (Op::CallExt,   Some(0)),       // Debugging func
+            (Op::Const,     Some(6u32)),
+            (Op::CallExt,   Some(0)),
+            (Op::Const,     Some(3u32)),
+            (Op::CallExt,   Some(0)),
+            (Op::Call,      Some(0)),       // External adding func
+        ]);
     }
 }
