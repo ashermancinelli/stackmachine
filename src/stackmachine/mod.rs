@@ -56,7 +56,7 @@ impl StackMachine {
     pub fn execute(&mut self, mut code: Vec<(Operation, Option<u32>)>) {
 
         // To use pop
-        let mut code: Vec<_> = code.iter().rev().collect();
+        code.reverse();
 
         while let Some((op, arg)) = code.pop() {
             match op {
