@@ -9,26 +9,24 @@ fn main() {
 
     sm.ext_functions = vec![
         Box::new(| s: &stackmachine::StackMachine | {
-            println!("Stack is {:?}", s.stack);
+            println!("DEBUG sm.stack<{:?}>", s.stack);
         }),
     ];
 
     sm.function_table = vec![
         Function::new(vec![
-            (Op::Const,     Some(6u32)),
+            (Op::Add,   None),
         ]),
     ];
 
+    println!("const'ing 6 and 3, then calling a function from the function table");
+    println!("to add, then calling external function to print.");
     sm.execute(vec![
+        (Op::CallExt,   Some(0)),
         (Op::Const,     Some(6u32)),
         (Op::Const,     Some(3u32)),
         (Op::CallExt,   Some(0)),
-        (Op::Const,     Some(1u32)),
+        (Op::Call,      Some(0)),       // External adding func
         (Op::CallExt,   Some(0)),
-        (Op::Const,     Some(1u32)),
-        (Op::CallExt,   Some(0)),
-        (Op::Add,       None),
-        (Op::CallExt,   Some(0)),
-        (Op::Call,      Some(0)),
     ]);
 }

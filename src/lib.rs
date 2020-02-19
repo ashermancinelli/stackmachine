@@ -73,12 +73,12 @@ pub mod tests {
         ];
 
         sm.execute(vec![
-            (Op::CallExt,   Some(0)),       // Debugging func
             (Op::Const,     Some(6u32)),
-            (Op::CallExt,   Some(0)),
             (Op::Const,     Some(3u32)),
             (Op::CallExt,   Some(0)),
             (Op::Call,      Some(0)),       // External adding func
         ]);
+
+        assert_eq!(Some(9), sm.pop());
     }
 }
