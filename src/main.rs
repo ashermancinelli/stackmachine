@@ -25,7 +25,7 @@ fn main() {
 
     let mut builder = Builder::new(2u32.pow(16));
 
-    builder.Const(5).Const(2).Mul().Execute();
+    builder.r#const(5).r#const(2).mul().execute();
 
     println!("Builder stack with {:?}", builder.sm.stack);
 }

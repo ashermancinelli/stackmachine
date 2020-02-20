@@ -1,15 +1,15 @@
 use std::iter::FromIterator;
 use std::thread;
 
-mod builder;
-mod function;
+pub mod builder;
+pub mod function;
 
 pub type Builder = builder::Builder;
 pub type Function = function::Function;
 pub type Op = function::op::Operation;
 
 pub struct StackMachine {
-    pub stack: Vec<u32>,
+    pub stack: Vec<i32>,
     pub memory: Vec<u8>,
     pub ext_functions: Vec<Box<dyn Fn(&StackMachine)>>,
     pub function_table: Vec<Function>,
@@ -17,35 +17,35 @@ pub struct StackMachine {
 }
 
 impl StackMachine {
-    pub fn last(&mut self) -> Option<u32> {
+    pub fn last(&self) -> Option<i32> {
         if self.stack.len() == 0 {
             return None;
         } else {
-            return Some(self.stack[self.stack.len() - 1].clone());
+            return Some(self.stack[self.stack.len() - 1]);
         }
     }
 
-    pub fn pop(&mut self) -> Option<u32> {
+    pub fn pop(&mut self) -> Option<i32> {
         return self.stack.pop();
     }
 
-    pub fn push(&mut self, item: u32) {
+    pub fn push(&mut self, item: i32) {
         return self.stack.push(item);
     }
 
-    pub fn add(&mut self, a: u32, b: u32) {
+    pub fn add(&mut self, a: i32, b: i32) {
         self.push(a + b);
     }
 
-    pub fn sub(&mut self, a: u32, b: u32) {
+    pub fn sub(&mut self, a: i32, b: i32) {
         self.push(a - b);
     }
 
-    pub fn mul(&mut self, a: u32, b: u32) {
+    pub fn mul(&mut self, a: i32, b: i32) {
         self.push(a * b);
     }
 
-    pub fn div(&mut self, a: u32, b: u32) {
+    pub fn div(&mut self, a: i32, b: i32) {
         self.push(a / b);
     }
 
@@ -67,7 +67,45 @@ impl StackMachine {
         };
     }
 
-    pub fn execute(&mut self, mut code: Vec<(Op, Option<u32>)>) {
+    fn r#if(&mut self, index: &mut usize, code: &mut Vec<(Op, Option<i32>)>) {
+        let a = self.pop().unwrap();
+        if a > 0 {
+            *index += 1;
+            let inner = Vec::from_iter(code[*index..].iter().cloned());
+            self.execute(inner);
+        } else {
+            let start_if_level = 0;
+            let mut if_level = 0;
+            loop {
+                *index += 1;
+                let (op, _) = &code[*index];
+
+                match op {
+                    Op::If => {
+                        if_level += 1;
+                    }
+                    Op::EndIf => {
+                        if_level -= 1;
+                    }
+                    Op::Else => {
+                        *index += 1;
+                        let inner = Vec::from_iter(code[*index..].iter().cloned());
+                        self.execute(inner);
+                    }
+                    _ => {
+                        if *index == code.len() {
+                            panic!("Mismatch in number of if's and endif's!");
+                        }
+                    }
+                };
+                if start_if_level == if_level {
+                    return;
+                }
+            }
+        }
+    }
+
+    pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
         let mut index = 0;
         let mut child_pid = 1;
         loop {
@@ -105,41 +143,16 @@ impl StackMachine {
                     self.call_func(arg.unwrap() as u8);
                 }
                 Op::If => {
+                    self.r#if(&mut index, &mut code);
+                }
+                Op::IfNot => {
                     let a = self.pop().unwrap();
-                    if a > 0 {
-                        index += 1;
-                        let inner = Vec::from_iter(code[index..].iter().cloned());
-                        self.execute(inner);
+                    if a <= 0 {
+                        self.push(1);
                     } else {
-                        let mut start_if_level = 0;
-                        let mut if_level = 0;
-                        loop {
-                            index += 1;
-                            let (op, _) = &code[index];
-
-                            match op {
-                                Op::If => {
-                                    if_level += 1;
-                                }
-                                Op::EndIf => {
-                                    if_level -= 1;
-                                }
-                                Op::Else => {
-                                    index += 1;
-                                    let inner = Vec::from_iter(code[index..].iter().cloned());
-                                    self.execute(inner);
-                                }
-                                _ => {
-                                    if index == code.len() {
-                                        panic!("Mismatch in number of if's and endif's!");
-                                    }
-                                }
-                            };
-                            if start_if_level == if_level {
-                                return;
-                            }
-                        }
+                        self.push(0);
                     }
+                    self.r#if(&mut index, &mut code);
                 }
                 Op::EndIf | Op::EndFunction => {
                     return;
@@ -153,7 +166,7 @@ impl StackMachine {
                             sm.pid = child_pid;
                             sm.push(child_pid.into());
                             sm.execute(_code);
-                        });
+                        }).expect("Could not spawn thread");
                     self.push(self.pid.into());
                     child_pid += 1;
                 }

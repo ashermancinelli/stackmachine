@@ -1,9 +1,8 @@
-mod stackmachine;
+pub mod stackmachine;
 
 #[cfg(test)]
 pub mod tests {
 
-    use super::stackmachine::Builder;
     use super::stackmachine::Function;
     use super::stackmachine::Op;
     use super::stackmachine::StackMachine;
@@ -12,8 +11,8 @@ pub mod tests {
     pub fn test_add() {
         let mut sm = StackMachine::new(2u32.pow(8));
         sm.execute(vec![
-            (Op::Const, Some(1u32)),
-            (Op::Const, Some(1u32)),
+            (Op::Const, Some(1i32)),
+            (Op::Const, Some(1i32)),
             (Op::Add, None),
         ]);
 
@@ -24,8 +23,8 @@ pub mod tests {
     pub fn test_sub() {
         let mut sm = StackMachine::new(2u32.pow(8));
         sm.execute(vec![
-            (Op::Const, Some(1u32)),
-            (Op::Const, Some(1u32)),
+            (Op::Const, Some(1i32)),
+            (Op::Const, Some(1i32)),
             (Op::Sub, None),
         ]);
 
@@ -36,8 +35,8 @@ pub mod tests {
     pub fn test_mul() {
         let mut sm = StackMachine::new(2u32.pow(8));
         sm.execute(vec![
-            (Op::Const, Some(2u32)),
-            (Op::Const, Some(3u32)),
+            (Op::Const, Some(2i32)),
+            (Op::Const, Some(3i32)),
             (Op::Mul, None),
         ]);
 
@@ -48,8 +47,8 @@ pub mod tests {
     pub fn test_div() {
         let mut sm = StackMachine::new(2u32.pow(8));
         sm.execute(vec![
-            (Op::Const, Some(6u32)),
-            (Op::Const, Some(3u32)),
+            (Op::Const, Some(6i32)),
+            (Op::Const, Some(3i32)),
             (Op::Div, None),
         ]);
 
@@ -63,8 +62,8 @@ pub mod tests {
         sm.function_table = vec![Function::new(vec![(Op::Add, None)])];
 
         sm.execute(vec![
-            (Op::Const, Some(6u32)),
-            (Op::Const, Some(3u32)),
+            (Op::Const, Some(6i32)),
+            (Op::Const, Some(3i32)),
             (Op::Call, Some(0)), // External adding func
         ]);
 
@@ -76,8 +75,8 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const, Some(6u32)),
-            (Op::Const, Some(3u32)),
+            (Op::Const, Some(6i32)),
+            (Op::Const, Some(3i32)),
             (Op::Fork, None),
         ]);
 
@@ -108,9 +107,9 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const, Some(1u32)),
+            (Op::Const, Some(1i32)),
             (Op::If, None),
-            (Op::Const, Some(3u32)),
+            (Op::Const, Some(3i32)),
             (Op::EndIf, None),
         ]);
 
@@ -122,14 +121,14 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const, Some(7u32)),
-            (Op::Const, Some(0u32)),
+            (Op::Const, Some(7i32)),
+            (Op::Const, Some(0i32)),
             (Op::If, None),
-            (Op::Const, Some(3u32)),
+            (Op::Const, Some(3i32)),
             (Op::EndIf, None),
         ]);
 
-        assert_eq!(Some(7u32), sm.pop());
+        assert_eq!(Some(7i32), sm.pop());
     }
 
     #[test]
@@ -137,16 +136,16 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const, Some(1u32)),
+            (Op::Const, Some(1i32)),
             (Op::If, None),
-            (Op::Const, Some(1u32)),
+            (Op::Const, Some(1i32)),
             (Op::If, None),
-            (Op::Const, Some(7u32)),
+            (Op::Const, Some(7i32)),
             (Op::EndIf, None),
             (Op::EndIf, None),
         ]);
 
-        assert_eq!(Some(7u32), sm.pop());
+        assert_eq!(Some(7i32), sm.pop());
     }
 
     #[test]
@@ -154,16 +153,16 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const, Some(1u32)),
+            (Op::Const, Some(1i32)),
             (Op::If, None),
-            (Op::Const, Some(3u32)),
-            (Op::Const, Some(0u32)),
+            (Op::Const, Some(3i32)),
+            (Op::Const, Some(0i32)),
             (Op::If, None),
-            (Op::Const, Some(7u32)),
+            (Op::Const, Some(7i32)),
             (Op::EndIf, None),
             (Op::EndIf, None),
         ]);
 
-        assert_eq!(Some(3u32), sm.pop());
+        assert_eq!(Some(3i32), sm.pop());
     }
 }
