@@ -2,8 +2,10 @@
 use std::thread;
 use std::iter::FromIterator;
 
+mod builder;
 mod function;
 
+pub type Builder = builder::Builder;
 pub type Function = function::Function;
 pub type Op = function::op::Operation;
 
@@ -16,6 +18,14 @@ pub struct StackMachine {
 }
 
 impl StackMachine {
+    pub fn last(&mut self) -> Option<u32> {
+        if self.stack.len() == 0 {
+            return None;
+        } else {
+            return Some(self.stack[self.stack.len()-1].clone());
+        }
+    }
+
     pub fn pop(&mut self) -> Option<u32> {
         return self.stack.pop();
     }

@@ -3,12 +3,14 @@ mod stackmachine;
 
 use crate::stackmachine::Function;
 use crate::stackmachine::Op;
+use crate::stackmachine::StackMachine;
+use crate::stackmachine::Builder;
 
 fn main() {
-    let mut sm = stackmachine::StackMachine::new(2u32.pow(16));
+    let mut sm = StackMachine::new(2u32.pow(16));
 
     sm.ext_functions = vec![
-        Box::new(| s: &stackmachine::StackMachine | {
+        Box::new(| s: &StackMachine | {
             println!("DEBUG sm.stack<{:?}>", s.stack);
         }),
     ];
@@ -24,6 +26,17 @@ fn main() {
         (Op::If,        None),
         (Op::Const,     Some(7)),
         (Op::EndIf,     None),
-        (Op::CallExt,   Some(0)),
     ]);
+
+    println!("Manual stackmachine with {:?}", sm.stack);
+
+    let mut builder = Builder::new(2u32.pow(16));
+
+    builder
+        .Const(5)
+        .Const(2)
+        .Mul()
+        .Execute();
+
+    println!("Builder stack with {:?}", builder.sm.stack);
 }

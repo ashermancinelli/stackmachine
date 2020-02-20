@@ -7,6 +7,7 @@ pub mod tests {
     use super::stackmachine::StackMachine;
     use super::stackmachine::Op;
     use super::stackmachine::Function;
+    use super::stackmachine::Builder;
 
     #[test]
     pub fn test_add() {
