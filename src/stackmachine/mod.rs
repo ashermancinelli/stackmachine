@@ -1,4 +1,7 @@
 
+use std::thread;
+use std::iter::FromIterator;
+
 mod function;
 
 pub type Function = function::Function;
@@ -55,10 +58,12 @@ impl StackMachine {
 
     pub fn execute(&mut self, mut code: Vec<(Operation, Option<u32>)>) {
 
-        // To use pop
-        code.reverse();
+        let mut index = 0;
+        let mut child_pid = 1;
+        loop {
+            if index == code.len() { break; }
 
-        while let Some((op, arg)) = code.pop() {
+            let (op, arg) = &code[index];
             match op {
                 Operation::Add => {
                     let a = self.pop().unwrap();
@@ -86,6 +91,18 @@ impl StackMachine {
                 Operation::Call => {
                     self.call_func(arg.unwrap() as u8);
                 },
+                Operation::Fork => {
+                    self.push(0);
+                    let mut _code = Vec::from_iter(code[index..].iter().cloned());
+                    thread::spawn(move || {
+                        let mut sm = StackMachine::new(2u32.pow(16));
+                        sm.push(child_pid);
+                        sm.execute(_code);
+                    });
+                    child_pid += 1;
+                },
+                Operation::Pop => { self.pop().unwrap(); },
+                Operation::Push => self.push(arg.unwrap()),
                 Operation::CallExt => {
                     self.call_func_ext(arg.unwrap() as u8);
                 },
@@ -94,6 +111,8 @@ impl StackMachine {
                 },
                 _ => panic!("Command not implemented.")
             };
+
+            index += 1;
         }
     }
 }

@@ -19,14 +19,11 @@ fn main() {
         ]),
     ];
 
-    println!("const'ing 6 and 3, then calling a function from the function table");
-    println!("to add, then calling external function to print.");
     sm.execute(vec![
         (Op::CallExt,   Some(0)),
         (Op::Const,     Some(6u32)),
         (Op::Const,     Some(3u32)),
-        (Op::CallExt,   Some(0)),
-        (Op::Call,      Some(0)),       // External adding func
+        (Op::Fork,      None),
         (Op::CallExt,   Some(0)),
     ]);
 }

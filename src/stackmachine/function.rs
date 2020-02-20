@@ -7,6 +7,8 @@ pub mod op {
         Mul,
         Div,
         Print,
+        Pop,
+        Push,
         Noop,
         Block,
         Loop,
@@ -14,6 +16,7 @@ pub mod op {
         Break,
         CallExt,
         Call,
+        Fork,
     }
 }
 
