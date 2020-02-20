@@ -1,16 +1,18 @@
 
 use std::thread;
+use std::iter::FromIterator;
 
 mod function;
 
 pub type Function = function::Function;
-pub type Operation = function::op::Operation;
+pub type Op = function::op::Operation;
 
 pub struct StackMachine {
     pub stack: Vec<u32>,
     pub memory: Vec<u8>,
     pub ext_functions: Vec<Box<dyn Fn(&StackMachine)>>,
     pub function_table: Vec<Function>,
+    pub pid: u8,
 }
 
 impl StackMachine {
@@ -52,78 +54,107 @@ impl StackMachine {
             memory: Vec::with_capacity(memsize as usize),
             ext_functions: Vec::<Box<dyn Fn(&StackMachine)>>::new(),
             function_table: Vec::<Function>::new(),
+            pid: 0,
         };
     }
 
-    pub fn execute(&mut self, mut code: Vec<(Operation, Option<u32>)>) {
+    pub fn execute(&mut self, mut code: Vec<(Op, Option<u32>)>) {
 
-        let index = 0;
-
+        let mut index = 0;
+        let mut child_pid = 1;
         loop {
-            let (op, arg) = code[index];
+            if index == code.len() { break; }
+
+            let (op, arg) = &code[index];
+            println!("DEBUG::op({:?})", op);
             match op {
-                Operation::Add => {
+                Op::Add => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.add(a, b);
                 },
-                Operation::Sub => {
+                Op::Sub => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.sub(a, b);
                 },
-                Operation::Mul => {
+                Op::Mul => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.mul(a, b);
                 },
-                Operation::Div => {
+                Op::Div => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.div(a, b);
                 },
-                Operation::Equal => {
-                    let a = self.pop().unwrap();
-                    let b = self.pop().unwrap();
-                    self.push(a == b ? 1 : 0);
-                },
-                Operation::NotEqual => {
-                    let a = self.pop().unwrap();
-                    let b = self.pop().unwrap();
-                    self.push(a != b ? 1 : 0);
-                },
-                Operation::Function => {
-                },
-                Operation::EndFunction => {
-                },
-                Operation::If => {
-                },
-                Operation::EndIf => {
-                },
-                Operation::Const => {
                     self.push(arg.unwrap());
                 },
-                Operation::Call => {
+                Op::Call => {
                     self.call_func(arg.unwrap() as u8);
                 },
-                Operation::CallExt => {
+                Op::If => {
+                    let a = self.pop().unwrap();
+                    if a > 0 {
+                        index += 1;
+                        let inner = Vec::from_iter(code[index..].iter().cloned());
+                        self.execute(inner);
+                    } else {
+                        let mut start_if_level = 0;
+                        let mut if_level = 0;
+                        loop {
+                            index += 1;
+                            let (op, _) = &code[index];
+
+                            match op {
+                                Op::If => { if_level += 1; },
+                                Op::EndIf => { if_level -= 1; },
+                                Op::Else => {
+                                    index += 1;
+                                    let inner = Vec::from_iter(code[index..].iter().cloned());
+                                    self.execute(inner);
+                                },
+                                _ => {
+                                    if index == code.len() {
+                                        panic!("Mismatch in number of if's and endif's!");
+                                    }
+                                },
+                            }
+                            if start_if_level == if_level {
+                                return;
+                            }
+                        }
+                    }
+                },
+                Op::EndIf | Op::EndFunction => {
+                    return;
+                },
+                Op::Fork => {
+                    let mut _code = Vec::from_iter(code[index..].iter().cloned());
+                    thread::spawn(move || {
+                        let mut sm = StackMachine::new(2u32.pow(16));
+                        sm.pid = child_pid;
+                        sm.push(child_pid.into());
+                        sm.execute(_code);
+                    });
+                    self.push(self.pid.into());
+                    child_pid += 1;
+                },
+                Op::GetPid => {
+                    self.push(self.pid.into());
+                },
+                Op::Pop => { self.pop().unwrap(); },
+                Op::Push => self.push(arg.unwrap()),
+                Op::CallExt => {
                     self.call_func_ext(arg.unwrap() as u8);
                 },
-                Operation::Fork => {
-                    let mut child = self.clone();
-                    child.push(1);
-                    self.push(0);
-                    let mut _code = code.clone()[index..];
-                    
-                    thread::spawn(move || {
-                        child.execute(_code);
-                    });
-                },
-                Operation::Print => {
+                Op::Print => {
                     println!("{}", self.pop().unwrap());
                 },
                 _ => panic!("Command not implemented.")
             };
+
+            index += 1;
         }
     }
 }

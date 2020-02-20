@@ -2,7 +2,7 @@
 mod stackmachine;
 
 use crate::stackmachine::Function;
-use crate::stackmachine::Operation as Op;
+use crate::stackmachine::Op;
 
 fn main() {
     let mut sm = stackmachine::StackMachine::new(2u32.pow(16));
@@ -19,14 +19,11 @@ fn main() {
         ]),
     ];
 
-    println!("const'ing 6 and 3, then calling a function from the function table");
-    println!("to add, then calling external function to print.");
     sm.execute(vec![
-        (Op::CallExt,   Some(0)),
-        (Op::Const,     Some(6u32)),
-        (Op::Const,     Some(3u32)),
-        (Op::CallExt,   Some(0)),
-        (Op::Call,      Some(0)),       // External adding func
+        (Op::Const,     Some(1)),
+        (Op::If,        None),
+        (Op::Const,     Some(7)),
+        (Op::EndIf,     None),
         (Op::CallExt,   Some(0)),
     ]);
 }
