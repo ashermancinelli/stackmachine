@@ -5,7 +5,7 @@ mod stackmachine;
 pub mod tests {
 
     use super::stackmachine::StackMachine;
-    use super::stackmachine::Operation as Op;
+    use super::stackmachine::Op;
     use super::stackmachine::Function;
 
     #[test]
@@ -99,5 +99,93 @@ pub mod tests {
         ]);
 
         assert_eq!(0, sm.pop().unwrap());
+    }
+
+    #[test]
+    fn test_if_true() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.ext_functions = vec![
+            Box::new(| s: &StackMachine | {
+                println!("Stack is {:?}", s.stack);
+            }),
+        ];
+
+        sm.execute(vec![
+            (Op::Const,     Some(1u32)),
+            (Op::If,        None),
+            (Op::Const,     Some(3u32)),
+            (Op::EndIf,     None),
+        ]);
+
+        assert_eq!(3, sm.pop().unwrap());
+    }
+
+    #[test]
+    fn test_if_false() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.ext_functions = vec![
+            Box::new(| s: &StackMachine | {
+                println!("Stack is {:?}", s.stack);
+            }),
+        ];
+
+        sm.execute(vec![
+            (Op::Const,     Some(7u32)),
+            (Op::Const,     Some(0u32)),
+            (Op::If,        None),
+            (Op::Const,     Some(3u32)),
+            (Op::EndIf,     None),
+        ]);
+
+        assert_eq!(Some(7u32), sm.pop());
+    }
+
+    #[test]
+    fn test_if_true_nested() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.ext_functions = vec![
+            Box::new(| s: &StackMachine | {
+                println!("Stack is {:?}", s.stack);
+            }),
+        ];
+
+        sm.execute(vec![
+            (Op::Const,     Some(1u32)),
+            (Op::If,        None),
+            (Op::Const,     Some(1u32)),
+            (Op::If,        None),
+            (Op::Const,     Some(7u32)),
+            (Op::EndIf,     None),
+            (Op::EndIf,     None),
+        ]);
+
+        assert_eq!(Some(7u32), sm.pop());
+    }
+
+    #[test]
+    fn test_if_false_nested() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.ext_functions = vec![
+            Box::new(| s: &StackMachine | {
+                println!("Stack is {:?}", s.stack);
+            }),
+        ];
+
+        sm.execute(vec![
+            (Op::Const,     Some(1u32)),
+            (Op::If,        None),
+            (Op::Const,     Some(3u32)),
+            (Op::Const,     Some(0u32)),
+            (Op::If,        None),
+            (Op::Const,     Some(7u32)),
+            (Op::EndIf,     None),
+            (Op::EndIf,     None),
+        ]);
+
+        assert_eq!(Some(3u32), sm.pop());
     }
 }

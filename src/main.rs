@@ -2,7 +2,7 @@
 mod stackmachine;
 
 use crate::stackmachine::Function;
-use crate::stackmachine::Operation as Op;
+use crate::stackmachine::Op;
 
 fn main() {
     let mut sm = stackmachine::StackMachine::new(2u32.pow(16));
@@ -21,9 +21,13 @@ fn main() {
 
     sm.execute(vec![
         (Op::CallExt,   Some(0)),
-        (Op::Const,     Some(6u32)),
-        (Op::Const,     Some(3u32)),
-        (Op::Fork,      None),
+        (Op::Const,     Some(1)),
+        (Op::CallExt,   Some(0)),
+        (Op::If,        None),
+        (Op::CallExt,   Some(0)),
+        (Op::Const,     Some(7)),
+        (Op::CallExt,   Some(0)),
+        (Op::EndIf,     None),
         (Op::CallExt,   Some(0)),
     ]);
 }

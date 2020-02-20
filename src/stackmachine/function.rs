@@ -1,5 +1,5 @@
 pub mod op {
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq, Debug)]
     pub enum Operation {
         Const,
         Add,
@@ -17,6 +17,16 @@ pub mod op {
         CallExt,
         Call,
         Fork,
+        If,
+        IfNot,
+        IfGT,
+        IfLT,
+        IfGTE,
+        IfLTE,
+        IfEq,
+        EndIf,
+        Function,
+        EndFunction,
     }
 }
 
