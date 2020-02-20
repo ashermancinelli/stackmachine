@@ -66,8 +66,9 @@ impl StackMachine {
             if index == code.len() { break; }
 
             let (op, arg) = &code[index];
-            println!("DEBUG::op({:?})", op);
+            // println!("DEBUG::op({:?})", op);
             match op {
+                Op::Const => { self.push(arg.unwrap()); },
                 Op::Add => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
@@ -87,8 +88,6 @@ impl StackMachine {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.div(a, b);
-                },
-                    self.push(arg.unwrap());
                 },
                 Op::Call => {
                     self.call_func(arg.unwrap() as u8);
@@ -119,7 +118,7 @@ impl StackMachine {
                                         panic!("Mismatch in number of if's and endif's!");
                                     }
                                 },
-                            }
+                            };
                             if start_if_level == if_level {
                                 return;
                             }
@@ -131,12 +130,14 @@ impl StackMachine {
                 },
                 Op::Fork => {
                     let mut _code = Vec::from_iter(code[index..].iter().cloned());
-                    thread::spawn(move || {
-                        let mut sm = StackMachine::new(2u32.pow(16));
-                        sm.pid = child_pid;
-                        sm.push(child_pid.into());
-                        sm.execute(_code);
-                    });
+                    thread::Builder::new()
+                        .name(format!("Thread<{}>", child_pid).to_string())
+                        .spawn(move || {
+                            let mut sm = StackMachine::new(2u32.pow(16));
+                            sm.pid = child_pid;
+                            sm.push(child_pid.into());
+                            sm.execute(_code);
+                        });
                     self.push(self.pid.into());
                     child_pid += 1;
                 },
@@ -151,9 +152,8 @@ impl StackMachine {
                 Op::Print => {
                     println!("{}", self.pop().unwrap());
                 },
-                _ => panic!("Command not implemented.")
+                _ => panic!("Command {:?} not implemented.", op)
             };
-
             index += 1;
         }
     }
