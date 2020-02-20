@@ -39,9 +39,7 @@ pub struct Function {
 
 impl Function {
     pub fn new(code: Vec<(op::Operation, Option<u32>)>) -> Function {
-        return Function {
-            code: code,
-        };
+        return Function { code: code };
     }
 }
 
@@ -52,8 +50,6 @@ mod function_tests {
 
     #[test]
     fn test_function_new() {
-        let f = Function::new(vec![
-            (Operation::Const, Some(3)),
-        ]);
+        let f = Function::new(vec![(Operation::Const, Some(3))]);
     }
 }

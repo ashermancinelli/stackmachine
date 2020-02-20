@@ -1,7 +1,6 @@
-
-use crate::stackmachine::StackMachine;
-use crate::stackmachine::Op;
 use crate::stackmachine::Function;
+use crate::stackmachine::Op;
+use crate::stackmachine::StackMachine;
 
 pub struct Builder {
     pub sm: StackMachine,
@@ -132,11 +131,7 @@ mod builder_test {
     fn test_builder_new() {
         let mut builder = Builder::new(2u32.pow(16));
 
-        builder
-            .Const(5)
-            .Const(3)
-            .Add()
-            .Execute();
+        builder.Const(5).Const(3).Add().Execute();
 
         assert_eq!(Some(8), builder.sm.last());
     }

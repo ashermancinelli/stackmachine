@@ -1,13 +1,12 @@
-
 mod stackmachine;
 
 #[cfg(test)]
 pub mod tests {
 
-    use super::stackmachine::StackMachine;
-    use super::stackmachine::Op;
-    use super::stackmachine::Function;
     use super::stackmachine::Builder;
+    use super::stackmachine::Function;
+    use super::stackmachine::Op;
+    use super::stackmachine::StackMachine;
 
     #[test]
     pub fn test_add() {
@@ -15,7 +14,7 @@ pub mod tests {
         sm.execute(vec![
             (Op::Const, Some(1u32)),
             (Op::Const, Some(1u32)),
-            (Op::Add,   None),
+            (Op::Add, None),
         ]);
 
         assert_eq!(Some(2), sm.pop());
@@ -27,7 +26,7 @@ pub mod tests {
         sm.execute(vec![
             (Op::Const, Some(1u32)),
             (Op::Const, Some(1u32)),
-            (Op::Sub,   None),
+            (Op::Sub, None),
         ]);
 
         assert_eq!(Some(0), sm.pop());
@@ -39,7 +38,7 @@ pub mod tests {
         sm.execute(vec![
             (Op::Const, Some(2u32)),
             (Op::Const, Some(3u32)),
-            (Op::Mul,   None),
+            (Op::Mul, None),
         ]);
 
         assert_eq!(Some(6), sm.pop());
@@ -51,7 +50,7 @@ pub mod tests {
         sm.execute(vec![
             (Op::Const, Some(6u32)),
             (Op::Const, Some(3u32)),
-            (Op::Div,   None),
+            (Op::Div, None),
         ]);
 
         assert_eq!(Some(0), sm.pop());
@@ -61,16 +60,12 @@ pub mod tests {
     pub fn test_call() {
         let mut sm = StackMachine::new(2u32.pow(8));
 
-        sm.function_table = vec![
-            Function::new(vec![
-                (Op::Add,   None),
-            ]),
-        ];
+        sm.function_table = vec![Function::new(vec![(Op::Add, None)])];
 
         sm.execute(vec![
-            (Op::Const,     Some(6u32)),
-            (Op::Const,     Some(3u32)),
-            (Op::Call,      Some(0)),       // External adding func
+            (Op::Const, Some(6u32)),
+            (Op::Const, Some(3u32)),
+            (Op::Call, Some(0)), // External adding func
         ]);
 
         assert_eq!(Some(9), sm.pop());
@@ -81,9 +76,9 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const,     Some(6u32)),
-            (Op::Const,     Some(3u32)),
-            (Op::Fork,      None),
+            (Op::Const, Some(6u32)),
+            (Op::Const, Some(3u32)),
+            (Op::Fork, None),
         ]);
 
         assert_eq!(Some(0), sm.pop());
@@ -95,13 +90,13 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Fork,      None),      // Fork should push `0` to parent
-            (Op::GetPid,    None),
-            (Op::If,        None),
-            (Op::Const,     Some(1)),
-            (Op::Else,      None),
-            (Op::Const,     Some(2)),   // Should be called
-            (Op::EndIf,     None),
+            (Op::Fork,      None), // Fork should push `0` to parent
+            (Op::GetPid, None),
+            (Op::If, None),
+            (Op::Const, Some(1)),
+            (Op::Else, None),
+            (Op::Const,     Some(2)), // Should be called
+            (Op::EndIf, None),
         ]);
 
         assert_eq!(Some(2), sm.pop());
@@ -113,10 +108,10 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const,     Some(1u32)),
-            (Op::If,        None),
-            (Op::Const,     Some(3u32)),
-            (Op::EndIf,     None),
+            (Op::Const, Some(1u32)),
+            (Op::If, None),
+            (Op::Const, Some(3u32)),
+            (Op::EndIf, None),
         ]);
 
         assert_eq!(3, sm.pop().unwrap());
@@ -127,11 +122,11 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const,     Some(7u32)),
-            (Op::Const,     Some(0u32)),
-            (Op::If,        None),
-            (Op::Const,     Some(3u32)),
-            (Op::EndIf,     None),
+            (Op::Const, Some(7u32)),
+            (Op::Const, Some(0u32)),
+            (Op::If, None),
+            (Op::Const, Some(3u32)),
+            (Op::EndIf, None),
         ]);
 
         assert_eq!(Some(7u32), sm.pop());
@@ -142,13 +137,13 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const,     Some(1u32)),
-            (Op::If,        None),
-            (Op::Const,     Some(1u32)),
-            (Op::If,        None),
-            (Op::Const,     Some(7u32)),
-            (Op::EndIf,     None),
-            (Op::EndIf,     None),
+            (Op::Const, Some(1u32)),
+            (Op::If, None),
+            (Op::Const, Some(1u32)),
+            (Op::If, None),
+            (Op::Const, Some(7u32)),
+            (Op::EndIf, None),
+            (Op::EndIf, None),
         ]);
 
         assert_eq!(Some(7u32), sm.pop());
@@ -159,14 +154,14 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const,     Some(1u32)),
-            (Op::If,        None),
-            (Op::Const,     Some(3u32)),
-            (Op::Const,     Some(0u32)),
-            (Op::If,        None),
-            (Op::Const,     Some(7u32)),
-            (Op::EndIf,     None),
-            (Op::EndIf,     None),
+            (Op::Const, Some(1u32)),
+            (Op::If, None),
+            (Op::Const, Some(3u32)),
+            (Op::Const, Some(0u32)),
+            (Op::If, None),
+            (Op::Const, Some(7u32)),
+            (Op::EndIf, None),
+            (Op::EndIf, None),
         ]);
 
         assert_eq!(Some(3u32), sm.pop());

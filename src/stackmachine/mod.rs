@@ -1,6 +1,5 @@
-
-use std::thread;
 use std::iter::FromIterator;
+use std::thread;
 
 mod builder;
 mod function;
@@ -22,7 +21,7 @@ impl StackMachine {
         if self.stack.len() == 0 {
             return None;
         } else {
-            return Some(self.stack[self.stack.len()-1].clone());
+            return Some(self.stack[self.stack.len() - 1].clone());
         }
     }
 
@@ -69,39 +68,42 @@ impl StackMachine {
     }
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<u32>)>) {
-
         let mut index = 0;
         let mut child_pid = 1;
         loop {
-            if index == code.len() { break; }
+            if index == code.len() {
+                break;
+            }
 
             let (op, arg) = &code[index];
             // println!("DEBUG::op({:?})", op);
             match op {
-                Op::Const => { self.push(arg.unwrap()); },
+                Op::Const => {
+                    self.push(arg.unwrap());
+                }
                 Op::Add => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.add(a, b);
-                },
+                }
                 Op::Sub => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.sub(a, b);
-                },
+                }
                 Op::Mul => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.mul(a, b);
-                },
+                }
                 Op::Div => {
                     let a = self.pop().unwrap();
                     let b = self.pop().unwrap();
                     self.div(a, b);
-                },
+                }
                 Op::Call => {
                     self.call_func(arg.unwrap() as u8);
-                },
+                }
                 Op::If => {
                     let a = self.pop().unwrap();
                     if a > 0 {
@@ -116,28 +118,32 @@ impl StackMachine {
                             let (op, _) = &code[index];
 
                             match op {
-                                Op::If => { if_level += 1; },
-                                Op::EndIf => { if_level -= 1; },
+                                Op::If => {
+                                    if_level += 1;
+                                }
+                                Op::EndIf => {
+                                    if_level -= 1;
+                                }
                                 Op::Else => {
                                     index += 1;
                                     let inner = Vec::from_iter(code[index..].iter().cloned());
                                     self.execute(inner);
-                                },
+                                }
                                 _ => {
                                     if index == code.len() {
                                         panic!("Mismatch in number of if's and endif's!");
                                     }
-                                },
+                                }
                             };
                             if start_if_level == if_level {
                                 return;
                             }
                         }
                     }
-                },
+                }
                 Op::EndIf | Op::EndFunction => {
                     return;
-                },
+                }
                 Op::Fork => {
                     let mut _code = Vec::from_iter(code[index..].iter().cloned());
                     thread::Builder::new()
@@ -150,19 +156,21 @@ impl StackMachine {
                         });
                     self.push(self.pid.into());
                     child_pid += 1;
-                },
+                }
                 Op::GetPid => {
                     self.push(self.pid.into());
-                },
-                Op::Pop => { self.pop().unwrap(); },
+                }
+                Op::Pop => {
+                    self.pop().unwrap();
+                }
                 Op::Push => self.push(arg.unwrap()),
                 Op::CallExt => {
                     self.call_func_ext(arg.unwrap() as u8);
-                },
+                }
                 Op::Print => {
                     println!("{}", self.pop().unwrap());
-                },
-                _ => panic!("Command {:?} not implemented.", op)
+                }
+                _ => panic!("Command {:?} not implemented.", op),
             };
             index += 1;
         }
