@@ -18,6 +18,7 @@ pub mod op {
         Call,
         Fork,
         If,
+        Else,
         IfNot,
         IfGT,
         IfLT,
@@ -27,6 +28,7 @@ pub mod op {
         EndIf,
         Function,
         EndFunction,
+        GetPid,
     }
 }
 

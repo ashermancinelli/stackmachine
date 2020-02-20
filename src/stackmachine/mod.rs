@@ -12,6 +12,7 @@ pub struct StackMachine {
     pub memory: Vec<u8>,
     pub ext_functions: Vec<Box<dyn Fn(&StackMachine)>>,
     pub function_table: Vec<Function>,
+    pub pid: u8,
 }
 
 impl StackMachine {
@@ -53,6 +54,7 @@ impl StackMachine {
             memory: Vec::with_capacity(memsize as usize),
             ext_functions: Vec::<Box<dyn Fn(&StackMachine)>>::new(),
             function_table: Vec::<Function>::new(),
+            pid: 0,
         };
     }
 
@@ -108,6 +110,11 @@ impl StackMachine {
                             match op {
                                 Op::If => { if_level += 1; },
                                 Op::EndIf => { if_level -= 1; },
+                                Op::Else => {
+                                    index += 1;
+                                    let inner = Vec::from_iter(code[index..].iter().cloned());
+                                    self.execute(inner);
+                                },
                                 _ => {
                                     if index == code.len() {
                                         panic!("Mismatch in number of if's and endif's!");
@@ -124,14 +131,18 @@ impl StackMachine {
                     return;
                 },
                 Op::Fork => {
-                    self.push(0);
                     let mut _code = Vec::from_iter(code[index..].iter().cloned());
                     thread::spawn(move || {
                         let mut sm = StackMachine::new(2u32.pow(16));
-                        sm.push(child_pid);
+                        sm.pid = child_pid;
+                        sm.push(child_pid.into());
                         sm.execute(_code);
                     });
+                    self.push(self.pid.into());
                     child_pid += 1;
+                },
+                Op::GetPid => {
+                    self.push(self.pid.into());
                 },
                 Op::Pop => { self.pop().unwrap(); },
                 Op::Push => self.push(arg.unwrap()),
