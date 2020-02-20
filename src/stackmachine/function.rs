@@ -55,9 +55,7 @@ mod function_tests {
         let mut sm = StackMachine::new(2u32);
         sm.function_table = vec![Function::new(vec![(Op::Const, Some(3))])];
 
-        sm.execute(vec![
-            (Op::Call, Some(0)),
-        ]);
+        sm.execute(vec![(Op::Call, Some(0))]);
 
         assert_eq!(Some(3), sm.pop());
     }

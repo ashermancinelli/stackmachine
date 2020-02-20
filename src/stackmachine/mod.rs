@@ -166,7 +166,8 @@ impl StackMachine {
                             sm.pid = child_pid;
                             sm.push(child_pid.into());
                             sm.execute(_code);
-                        }).expect("Could not spawn thread");
+                        })
+                        .expect("Could not spawn thread");
                     self.push(self.pid.into());
                     child_pid += 1;
                 }

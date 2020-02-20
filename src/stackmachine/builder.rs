@@ -211,7 +211,13 @@ mod builder_test {
     fn test_builder_if_fails() {
         let mut builder = Builder::new(2u32.pow(16));
 
-        builder.r#const(5).r#const(0).r#if().r#const(3).end_if().execute();
+        builder
+            .r#const(5)
+            .r#const(0)
+            .r#if()
+            .r#const(3)
+            .end_if()
+            .execute();
 
         assert_eq!(Some(5), builder.sm.last());
     }
@@ -220,7 +226,13 @@ mod builder_test {
     fn test_builder_if_not_succeeds() {
         let mut builder = Builder::new(2u32.pow(16));
 
-        builder.r#const(5).r#const(0).r#if_not().r#const(3).end_if().execute();
+        builder
+            .r#const(5)
+            .r#const(0)
+            .r#if_not()
+            .r#const(3)
+            .end_if()
+            .execute();
 
         assert_eq!(Some(3), builder.sm.last());
     }
@@ -229,7 +241,13 @@ mod builder_test {
     fn test_builder_if_not_fails() {
         let mut builder = Builder::new(2u32.pow(16));
 
-        builder.r#const(3).r#const(1).r#if_not().r#const(5).end_if().execute();
+        builder
+            .r#const(3)
+            .r#const(1)
+            .r#if_not()
+            .r#const(5)
+            .end_if()
+            .execute();
 
         assert_eq!(Some(3), builder.sm.last());
     }
