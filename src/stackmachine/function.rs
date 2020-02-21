@@ -30,6 +30,7 @@ pub mod op {
         Function,
         EndFunction,
         GetPid,
+        Child,
     }
 }
 

@@ -78,6 +78,7 @@ pub mod tests {
             (Op::Const, Some(6i32)),
             (Op::Const, Some(3i32)),
             (Op::Fork, None),
+            (Op::Child, None),
         ]);
 
         assert_eq!(Some(0), sm.pop());

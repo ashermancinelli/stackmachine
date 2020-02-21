@@ -13,7 +13,9 @@ pub struct StackMachine {
     pub memory: Vec<u8>,
     pub ext_functions: Vec<Box<dyn Fn(&StackMachine)>>,
     pub function_table: Vec<Function>,
-    pub pid: u8,
+    pub pid: u16,
+    pub child: bool,
+    pub child_pid: u16,
 }
 
 impl StackMachine {
@@ -64,6 +66,8 @@ impl StackMachine {
             ext_functions: Vec::<Box<dyn Fn(&StackMachine)>>::new(),
             function_table: Vec::<Function>::new(),
             pid: 0,
+            child: false,
+            child_pid: 1
         };
     }
 
@@ -107,7 +111,6 @@ impl StackMachine {
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
         let mut index = 0;
-        let mut child_pid = 1;
         loop {
             if index == code.len() {
                 break;
@@ -158,21 +161,31 @@ impl StackMachine {
                     return;
                 }
                 Op::Fork => {
-                    let mut _code = Vec::from_iter(code[index..].iter().cloned());
+                    let child_code = Vec::from_iter(code[index..].iter().cloned());
+                    let stack = self.stack.clone();
+                    let child_pid = self.child_pid.clone();
+                    self.child = false;
                     thread::Builder::new()
-                        .name(format!("Thread<{}>", child_pid).to_string())
+                        .name(format!("Thread<{}>", self.child_pid).to_string())
                         .spawn(move || {
                             let mut sm = StackMachine::new(2u32.pow(16));
                             sm.pid = child_pid;
-                            sm.push(child_pid.into());
-                            sm.execute(_code);
+                            sm.stack = stack;
+                            sm.child = true;
+                            sm.execute(child_code);
                         })
                         .expect("Could not spawn thread");
-                    self.push(self.pid.into());
-                    child_pid += 1;
+                    self.child_pid += 1;
                 }
                 Op::GetPid => {
                     self.push(self.pid.into());
+                }
+                Op::Child => {
+                    if self.child {
+                        self.push(1);
+                    } else {
+                        self.push(0);
+                    }
                 }
                 Op::Pop => {
                     self.pop().unwrap();

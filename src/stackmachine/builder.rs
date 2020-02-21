@@ -10,13 +10,7 @@ pub struct Builder {
 impl Builder {
     pub fn new(memsize: u32) -> Builder {
         return Builder {
-            sm: StackMachine {
-                stack: Vec::new(),
-                memory: Vec::with_capacity(memsize as usize),
-                ext_functions: Vec::<Box<dyn Fn(&StackMachine)>>::new(),
-                function_table: Vec::<Function>::new(),
-                pid: 0,
-            },
+            sm: StackMachine::new(memsize),
             code: Vec::new(),
         };
     }
@@ -67,6 +61,11 @@ impl Builder {
 
     pub fn fork(&mut self) -> &mut Builder {
         self.push((Op::Fork, None));
+        return self;
+    }
+
+    pub fn child(&mut self) -> &mut Builder {
+        self.push((Op::Child, None));
         return self;
     }
 
@@ -184,7 +183,7 @@ mod builder_test {
     fn test_builder_fork() {
         let mut builder = Builder::new(2u32.pow(16));
 
-        builder.fork().execute();
+        builder.fork().child().execute();
 
         assert_eq!(Some(0), builder.sm.last());
     }
