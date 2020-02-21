@@ -74,33 +74,33 @@ impl Builder {
         return self;
     }
 
-    pub fn if_eq(&mut self) -> &mut Builder {
-        self.push((Op::IfEq, None));
+    pub fn eq(&mut self) -> &mut Builder {
+        self.push((Op::r#Eq, None));
         return self;
     }
 
-    pub fn if_not(&mut self) -> &mut Builder {
-        self.push((Op::IfNot, None));
+    pub fn not(&mut self) -> &mut Builder {
+        self.push((Op::Not, None));
         return self;
     }
 
-    pub fn if_gt(&mut self) -> &mut Builder {
-        self.push((Op::IfGT, None));
+    pub fn gt(&mut self) -> &mut Builder {
+        self.push((Op::GT, None));
         return self;
     }
 
-    pub fn if_lt(&mut self) -> &mut Builder {
-        self.push((Op::IfLT, None));
+    pub fn lt(&mut self) -> &mut Builder {
+        self.push((Op::LT, None));
         return self;
     }
 
-    pub fn if_gte(&mut self) -> &mut Builder {
-        self.push((Op::IfGTE, None));
+    pub fn gte(&mut self) -> &mut Builder {
+        self.push((Op::GTE, None));
         return self;
     }
 
-    pub fn if_lte(&mut self) -> &mut Builder {
-        self.push((Op::IfLTE, None));
+    pub fn lte(&mut self) -> &mut Builder {
+        self.push((Op::LTE, None));
         return self;
     }
 
@@ -198,7 +198,7 @@ mod builder_test {
     }
 
     #[test]
-    fn test_builder_if_succeeds() {
+    fn test_builder_succeeds() {
         let mut builder = Builder::new(2u32.pow(16));
 
         builder.r#const(1).r#if().r#const(5).end_if().execute();
@@ -207,7 +207,7 @@ mod builder_test {
     }
 
     #[test]
-    fn test_builder_if_fails() {
+    fn test_builder_fails() {
         let mut builder = Builder::new(2u32.pow(16));
 
         builder
@@ -222,42 +222,16 @@ mod builder_test {
     }
 
     #[test]
-    fn test_builder_if_not_succeeds() {
+    fn test_builder_not() {
         let mut builder = Builder::new(2u32.pow(16));
 
-        builder
-            .r#const(5)
-            .r#const(0)
-            .r#if_not()
-            .r#const(3)
-            .end_if()
-            .execute();
+        builder.r#const(0).r#not().execute();
 
-        assert_eq!(Some(3), builder.sm.last());
-    }
+        assert_eq!(Some(1), builder.sm.last());
 
-    #[test]
-    fn test_builder_if_not_fails() {
-        let mut builder = Builder::new(2u32.pow(16));
+        builder.r#const(1).r#not().execute();
 
-        builder
-            .r#const(3)
-            .r#const(1)
-            .r#if_not()
-            .r#const(5)
-            .end_if()
-            .execute();
-
-        assert_eq!(Some(3), builder.sm.last());
-    }
-
-    #[test]
-    fn test_builder_print() {
-        let mut builder = Builder::new(2u32.pow(16));
-
-        builder.r#const(5).r#const(0).print().execute();
-
-        assert_eq!(Some(5), builder.sm.last());
+        assert_eq!(Some(0), builder.sm.last());
     }
 
     #[test]

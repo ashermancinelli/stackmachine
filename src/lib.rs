@@ -122,14 +122,13 @@ pub mod tests {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Const, Some(7i32)),
             (Op::Const, Some(0i32)),
             (Op::If, None),
             (Op::Const, Some(3i32)),
             (Op::EndIf, None),
         ]);
 
-        assert_eq!(Some(7i32), sm.pop());
+        assert_eq!(0, sm.stack.len());
     }
 
     #[test]
@@ -165,5 +164,23 @@ pub mod tests {
         ]);
 
         assert_eq!(Some(3i32), sm.pop());
+    }
+
+    #[test]
+    fn test_not_succeeds() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.execute(vec![(Op::Const, Some(0i32)), (Op::Not, None)]);
+
+        assert_eq!(Some(1i32), sm.pop());
+    }
+
+    #[test]
+    fn test_not_fails() {
+        let mut sm = StackMachine::new(2u32.pow(8));
+
+        sm.execute(vec![(Op::Const, Some(1i32)), (Op::Not, None)]);
+
+        assert_eq!(Some(0i32), sm.pop());
     }
 }

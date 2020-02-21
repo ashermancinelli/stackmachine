@@ -1,3 +1,4 @@
+use std::fmt;
 use std::iter::FromIterator;
 use std::thread;
 
@@ -67,7 +68,7 @@ impl StackMachine {
             function_table: Vec::<Function>::new(),
             pid: 0,
             child: false,
-            child_pid: 1
+            child_pid: 1,
         };
     }
 
@@ -148,14 +149,13 @@ impl StackMachine {
                 Op::If => {
                     self.r#if(&mut index, &mut code);
                 }
-                Op::IfNot => {
+                Op::Not => {
                     let a = self.pop().unwrap();
                     if a <= 0 {
                         self.push(1);
                     } else {
                         self.push(0);
                     }
-                    self.r#if(&mut index, &mut code);
                 }
                 Op::EndIf | Op::EndFunction => {
                     return;
@@ -195,11 +195,20 @@ impl StackMachine {
                     self.call_func_ext(arg.unwrap() as u8);
                 }
                 Op::Print => {
-                    println!("{}", self.pop().unwrap());
+                    println!("{}", self.last().unwrap());
+                }
+                Op::Debug => {
+                    println!("DEBUG::{}", self);
                 }
                 _ => panic!("Command {:?} not implemented.", op),
             };
             index += 1;
         }
+    }
+}
+
+impl fmt::Display for StackMachine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "StackMachine<{}, {:?}>", self.pid, self.stack)
     }
 }
