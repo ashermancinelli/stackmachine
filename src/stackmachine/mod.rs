@@ -74,64 +74,125 @@ impl StackMachine {
 
     fn r#if(&mut self, index: &mut usize, code: &mut Vec<(Op, Option<i32>)>) {
         // Value that represents the conditional
+        // default to false if `if` statement appears with empty stack
         let a = self.pop().unwrap_or(0);
 
-        // The condition was met
-        if a > 0 {
+        if a > 0 { // The condition was met
+
+            // nesting level for conditional statements
+            let mut nest = 1;
+            let start = *index + 1;
+            while nest > 0 {
+                *index += 1;
+                nest += match code[*index] {
+                    (Op::Else, _) => {
+                        if nest == 1 {
+                            self.execute(code
+                                         .iter()
+                                         .cloned()
+                                         .skip(start)
+                                         .take(*index - start)
+                                         .collect());
+                            *index += code
+                                .iter()
+                                .cloned()
+                                .skip(*index)
+                                .take_while(|(x, _)| *x != Op::EndIf)
+                                .count();
+                            return;
+                        }
+                        0
+                    }
+                    (Op::EndIf, _) => -1,
+                    (Op::If, _) => 1,
+                    _ => 0,
+                };
+            }
             // Execute through the end of the if block
             self.execute(code
                          .iter()
                          .cloned()
-                         .skip(*index + 1)
-                         .take_while(|(x, _)| *x != Op::EndIf && *x != Op::Else)
+                         .skip(start)
+                         .take(*index-start)
                          .collect());
-            *index += code 
-                .iter()
-                .cloned()
-                .skip(*index)
-                .take_while(|(x, _)| *x != Op::EndIf && *x != Op::Else)
-                .count();
-        } else {
-            // An else block exists
-            // Execute through the end of the else block
-            if let Some(_) = code.iter().cloned().find(|(x, _)| *x == Op::Else) {
+
+        } else { // The condition was not met
+
+            if *index == code.len() {
+                return;
+            }
+
+            let mut nest = 1;
+            let mut else_idx = None; // starting index of else block
+            while nest > 0 {
+                match code[*index] {
+                    (Op::EndIf, _) => {
+                        nest -= 1;
+                        if nest == 1 {
+                            break;
+                        }
+                    }
+                    (Op::Else, _) => {
+                        if nest == 1 {
+                            else_idx = Some(*index);
+                        }
+                    }
+                    (Op::If, _) => {
+                        nest += 1;
+                    }
+                    _ => (),
+                };
+                *index += 1;
+            }
+
+            if let Some(idx) = else_idx {
                 self.execute(code
                              .iter()
                              .cloned()
-                             .skip(*index)
-                             .skip_while(|(x, _)| *x != Op::Else)
-                             .skip(1)
-                             .take_while(|(x, _)| *x != Op::EndIf)
+                             .skip(idx+1)
+                             .take(*index - idx - 1)
                              .collect());
-                *index += code
-                    .iter()
-                    .cloned()
-                    .skip(*index)
-                    .take_while(|(x, _)| *x != Op::EndIf)
-                    .count();
-            }
-
-            // No else block exists; just return
-            else {
-                return;
             }
         }
     }
 
+    // No return type because the stack machine will self destruct when syntax
+    // errors are encountered.
+    pub fn syntax_check(&self, code: &Vec<(Op, Option<i32>)>) {
+        let mut ifs = 0;
+        let mut endifs = 0; 
+        let mut elses = 0;
+        for (op, _) in code {
+            match op {
+                Op::If => ifs += 1,
+                Op::EndIf => endifs += 1,
+                Op::Else => elses += 1,
+                _ => (),
+            }
+        }
+
+        if ifs != endifs {
+            panic!("Each `if` must have a matching `endif`. Got {} if statements and {} endif statements.",
+                   ifs, endifs);
+        }
+        if elses > ifs {
+            panic!("`Else` may appear max of one time per if block.");
+        }
+    }
+
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
-        println!("Executing code {:?}", code);
+        println!("Executing routine: {:?}", code);
+        self.syntax_check(&code);
         let mut children = vec![];
         let mut index = 0;
         loop {
-            if index == code.len() {
+            if index >= code.len() {
                 break;
             }
 
             let (op, arg) = &code[index];
-            // println!("DEBUG::op({:?})", op);
 
-            // Most of these operations simply call corresponding handlers,
-            // though some of the opcodes are noops (like endif for example).
+            // Match the opcodes with corresponding handlers or actions
             match op {
                 Op::Const => {
                     self.push(arg.unwrap());
@@ -179,7 +240,7 @@ impl StackMachine {
                         self.push(0);
                     }
                 }
-                Op::EndIf | Op::EndFunction | Op::Return => {
+                Op::EndIf | Op::EndFunction | Op::Return | Op::Else => {
                     return;
                 }
                 // Simluates a fork system call using threads.
@@ -190,7 +251,7 @@ impl StackMachine {
                     let child_code = code
                         .iter()
                         .cloned()
-                        .skip(index+1)
+                        .skip(index+1) // omitting the +1 leades to infinite threads
                         .collect();
                     let stack = self.stack.clone();
                     let child_pid = self.pid * 2 + 1;
@@ -198,7 +259,6 @@ impl StackMachine {
                     children.push(thread::Builder::new()
                         .name(format!("Thread<{}>", child_pid).to_string())
                         .spawn(move || {
-                            println!("New thread with pid {}", child_pid);
                             let mut sm = StackMachine::new(2u32.pow(16));
                             sm.pid = child_pid;
                             sm.stack = stack;

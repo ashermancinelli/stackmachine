@@ -1,5 +1,5 @@
 pub mod op {
-    #[derive(Clone, PartialEq, Debug)]
+    #[derive(Clone, PartialEq, Copy, Debug)]
     #[allow(dead_code)]
     #[repr(u16)]
     pub enum Operation {
