@@ -1,6 +1,7 @@
 pub mod op {
     #[derive(Clone, PartialEq, Debug)]
     #[allow(dead_code)]
+    #[repr(u16)]
     pub enum Operation {
         Const,
         Add,
@@ -41,6 +42,10 @@ pub struct Function {
 }
 
 impl Function {
+
+    // In the future, I need to add more configuration options and struct 
+    // members for creating a
+    // function to better replicate a function table.
     pub fn new(code: Vec<(op::Operation, Option<i32>)>) -> Function {
         return Function { code: code };
     }

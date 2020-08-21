@@ -1,9 +1,11 @@
 use std::fmt;
+use std::ptr;
 use std::iter::FromIterator;
 use std::thread;
 
 pub mod builder;
 pub mod function;
+pub mod reader;
 
 pub type Builder = builder::Builder;
 pub type Function = function::Function;
@@ -73,44 +75,53 @@ impl StackMachine {
     }
 
     fn r#if(&mut self, index: &mut usize, code: &mut Vec<(Op, Option<i32>)>) {
-        let a = self.pop().unwrap();
-        if a > 0 {
-            *index += 1;
-            let inner = Vec::from_iter(code[*index..].iter().cloned());
-            self.execute(inner);
-        } else {
-            let start_if_level = 0;
-            let mut if_level = 0;
-            loop {
-                *index += 1;
-                let (op, _) = &code[*index];
+        // Value conditional is checked on
+        let a = self.pop().unwrap_or(0);
 
-                match op {
-                    Op::If => {
-                        if_level += 1;
-                    }
-                    Op::EndIf => {
-                        if_level -= 1;
-                    }
-                    Op::Else => {
-                        *index += 1;
-                        let inner = Vec::from_iter(code[*index..].iter().cloned());
-                        self.execute(inner);
-                    }
-                    _ => {
-                        if *index == code.len() {
-                            panic!("Mismatch in number of if's and endif's!");
-                        }
-                    }
-                };
-                if start_if_level == if_level {
-                    return;
-                }
+        // The condition was met
+        if a > 0 {
+            // Execute through the end of the if block
+            self.execute(code
+                         .iter()
+                         .cloned()
+                         .skip(*index + 1)
+                         .take_while(|(x, _)| *x != Op::EndIf && *x != Op::Else)
+                         .collect());
+            *index += code 
+                .iter()
+                .cloned()
+                .skip(*index)
+                .take_while(|(x, _)| *x != Op::EndIf && *x != Op::Else)
+                .count();
+        } else {
+            // An else block exists
+            // Execute through the end of the else block
+            if let Some(_) = code.iter().cloned().find(|(x, _)| *x == Op::Else) {
+                self.execute(code
+                             .iter()
+                             .cloned()
+                             .skip(*index)
+                             .skip_while(|(x, _)| *x != Op::Else)
+                             .skip(1)
+                             .take_while(|(x, _)| *x != Op::EndIf)
+                             .collect());
+                *index += code
+                    .iter()
+                    .cloned()
+                    .skip(*index)
+                    .take_while(|(x, _)| *x != Op::EndIf)
+                    .count();
+            }
+
+            // No else block exists; just return
+            else {
+                return;
             }
         }
     }
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
+        println!("Executing code {:?}", code);
         let mut index = 0;
         loop {
             if index == code.len() {
@@ -119,6 +130,9 @@ impl StackMachine {
 
             let (op, arg) = &code[index];
             // println!("DEBUG::op({:?})", op);
+
+            // Most of these operations simply call corresponding handlers,
+            // though some of the opcodes are noops (like endif for example).
             match op {
                 Op::Const => {
                     self.push(arg.unwrap());
@@ -143,6 +157,15 @@ impl StackMachine {
                     let b = self.pop().unwrap();
                     self.div(a, b);
                 }
+                Op::r#Eq => {
+                    let a = self.pop().unwrap();
+                    if a == arg.unwrap() {
+                        self.push(1);
+                    }
+                    else {
+                        self.push(0);
+                    }
+                }
                 Op::Call => {
                     self.call_func(arg.unwrap() as u8);
                 }
@@ -157,9 +180,13 @@ impl StackMachine {
                         self.push(0);
                     }
                 }
-                Op::EndIf | Op::EndFunction => {
+                Op::EndIf | Op::EndFunction | Op::Return => {
                     return;
                 }
+                // Simluates a fork system call using threads.
+                // Creates a new stack machine on the new thread, pushes the
+                // rest of the code to currently being executed on this stack
+                // machine, and sets the child's PID and 'child' member.
                 Op::Fork => {
                     let child_code = Vec::from_iter(code[index..].iter().cloned());
                     let stack = self.stack.clone();
@@ -191,6 +218,8 @@ impl StackMachine {
                     self.pop().unwrap();
                 }
                 Op::Push => self.push(arg.unwrap()),
+
+                // Call external function described in-code
                 Op::CallExt => {
                     self.call_func_ext(arg.unwrap() as u8);
                 }

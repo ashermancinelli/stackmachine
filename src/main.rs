@@ -1,31 +1,36 @@
-mod stackmachine;
+use std::env;
+use std::io::{Error, ErrorKind};
+use std::path::Path;
+use stackmachine::stackmachine::{reader, StackMachine};
 
-use crate::stackmachine::Builder;
-use crate::stackmachine::Function;
-use crate::stackmachine::Op;
-use crate::stackmachine::StackMachine;
+// Prefer panics at this level. If we encounter an error at this level, we
+// want to self destruct. Lower than this, prefer to return results and
+// options so problems can be handled.
+fn main() -> Result<(), std::io::Error> {
+    let args: Vec<String> = env::args().collect();
 
-fn main() {
-    let mut sm = StackMachine::new(2u32.pow(16));
+    if args.len() == 1 {
+        panic!("Please pass filename to stackmachine.")
+    }
 
-    sm.ext_functions = vec![Box::new(|s: &StackMachine| {
-        println!("DEBUG sm.stack<{:?}>", s.stack);
-    })];
-
-    sm.function_table = vec![Function::new(vec![(Op::Add, None)])];
-
-    sm.execute(vec![
-        (Op::Const, Some(1)),
-        (Op::If, None),
-        (Op::Const, Some(7)),
-        (Op::EndIf, None),
-    ]);
-
-    println!("Manual stackmachine with {:?}", sm.stack);
-
-    let mut builder = Builder::new(2u32.pow(16));
-
-    builder.r#const(5).r#const(2).mul().execute();
-
-    println!("Builder stack with {:?}", builder.sm.stack);
+    for arg in args.iter().skip(1) {
+        let path = Path::new(arg);
+        if path.exists() {
+            if let Some(p) = path.to_str() {
+                let mut sm = StackMachine::new(2u32.pow(16));
+                
+                let code = reader::read(&String::from(p));
+                if let Some(c) = code {
+                    sm.execute(c);
+                }
+                else {
+                    panic!("Could not parse code.");
+                }
+            }
+        }
+        else {
+            panic!("Could not find file {}.", path.to_str().unwrap());
+        }
+    }
+    Ok(())
 }

@@ -6,6 +6,7 @@ pub mod tests {
     use super::stackmachine::Function;
     use super::stackmachine::Op;
     use super::stackmachine::StackMachine;
+    use super::stackmachine::reader;
 
     #[test]
     pub fn test_add() {
@@ -182,5 +183,10 @@ pub mod tests {
         sm.execute(vec![(Op::Const, Some(1i32)), (Op::Not, None)]);
 
         assert_eq!(Some(0i32), sm.pop());
+    }
+
+    #[test]
+    fn test_read() {
+        let code = reader::read("examples/adder.sm");
     }
 }
