@@ -18,7 +18,6 @@ pub struct StackMachine {
     pub function_table: Vec<Function>,
     pub pid: u16,
     pub child: bool,
-    pub child_pid: u16,
 }
 
 impl StackMachine {
@@ -70,12 +69,11 @@ impl StackMachine {
             function_table: Vec::<Function>::new(),
             pid: 0,
             child: false,
-            child_pid: 1,
         };
     }
 
     fn r#if(&mut self, index: &mut usize, code: &mut Vec<(Op, Option<i32>)>) {
-        // Value conditional is checked on
+        // Value that represents the conditional
         let a = self.pop().unwrap_or(0);
 
         // The condition was met
@@ -122,6 +120,7 @@ impl StackMachine {
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
         println!("Executing code {:?}", code);
+        let mut children = vec![];
         let mut index = 0;
         loop {
             if index == code.len() {
@@ -188,21 +187,25 @@ impl StackMachine {
                 // rest of the code to currently being executed on this stack
                 // machine, and sets the child's PID and 'child' member.
                 Op::Fork => {
-                    let child_code = Vec::from_iter(code[index..].iter().cloned());
+                    let child_code = code
+                        .iter()
+                        .cloned()
+                        .skip(index+1)
+                        .collect();
                     let stack = self.stack.clone();
-                    let child_pid = self.child_pid.clone();
+                    let child_pid = self.pid * 2 + 1;
                     self.child = false;
-                    thread::Builder::new()
-                        .name(format!("Thread<{}>", self.child_pid).to_string())
+                    children.push(thread::Builder::new()
+                        .name(format!("Thread<{}>", child_pid).to_string())
                         .spawn(move || {
+                            println!("New thread with pid {}", child_pid);
                             let mut sm = StackMachine::new(2u32.pow(16));
                             sm.pid = child_pid;
                             sm.stack = stack;
                             sm.child = true;
                             sm.execute(child_code);
                         })
-                        .expect("Could not spawn thread");
-                    self.child_pid += 1;
+                        .expect("Could not spawn thread"));
                 }
                 Op::GetPid => {
                     self.push(self.pid.into());
@@ -232,6 +235,11 @@ impl StackMachine {
                 _ => panic!("Command {:?} not implemented.", op),
             };
             index += 1;
+        }
+
+        // wait for children to finish
+        for handle in children {
+            handle.join().unwrap();
         }
     }
 }

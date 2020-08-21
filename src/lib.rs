@@ -187,6 +187,6 @@ pub mod tests {
 
     #[test]
     fn test_read() {
-        let code = reader::read("examples/adder.sm");
+        let code = reader::read(&String::from("examples/adder.sm"));
     }
 }
