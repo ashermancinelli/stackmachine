@@ -63,6 +63,7 @@ fn parse_opcode(line: &std::string::String) -> Option<(Op, Option<i32>)> {
         "child" => Some(Op::Child),
         "getpid" => Some(Op::GetPid),
         "dbg" => Some(Op::Debug),
+        "print" => Some(Op::Print),
         _ => None,
     };
 

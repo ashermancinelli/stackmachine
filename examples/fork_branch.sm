@@ -1,0 +1,10 @@
+getpid
+fork
+getpid
+eq
+if
+  const 1
+else
+  const 2
+endif
+print

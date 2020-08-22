@@ -3,10 +3,11 @@ pub mod stackmachine;
 #[cfg(test)]
 pub mod tests {
 
-    use super::stackmachine::Function;
-    use super::stackmachine::Op;
+    use super::stackmachine::function::Function;
+    use super::stackmachine::function::Op;
     use super::stackmachine::StackMachine;
     use super::stackmachine::reader;
+    use super::stackmachine::builder::Builder;
 
     #[test]
     pub fn test_add() {
@@ -60,7 +61,7 @@ pub mod tests {
     pub fn test_call() {
         let mut sm = StackMachine::new(2u32.pow(8));
 
-        sm.function_table = vec![Function::new(vec![(Op::Add, None)])];
+        sm.function_table = vec![vec![(Op::Add, None)]];
 
         sm.execute(vec![
             (Op::Const, Some(6i32)),
@@ -85,24 +86,23 @@ pub mod tests {
         assert_eq!(Some(0), sm.pop());
     }
 
-    /*
     #[test]
+    #[ignore]
     fn test_fork_branch() {
         let mut sm = StackMachine::new(2u32.pow(8));
 
         sm.execute(vec![
-            (Op::Fork,      None), // Fork should push `0` to parent
-            (Op::GetPid, None),
+            (Op::Fork, None), // Fork should push `0` to parent
+            (Op::Child, None),
             (Op::If, None),
             (Op::Const, Some(1)),
             (Op::Else, None),
-            (Op::Const,     Some(2)), // Should be called
+            (Op::Const, Some(2)), // Should be called
             (Op::EndIf, None),
         ]);
 
         assert_eq!(Some(2), sm.pop());
     }
-    */
 
     #[test]
     fn test_if_true() {
@@ -188,5 +188,24 @@ pub mod tests {
     #[test]
     fn test_read() {
         let code = reader::read(&String::from("examples/adder.sm"));
+    }
+
+    #[test]
+    fn test_integration_builder() {
+        let mut builder = Builder::new(2u32.pow(16));
+        builder.r#const(5).r#const(2).mul().execute();
+        assert_eq!(Some(10i32), builder.sm.last());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_cli() {
+
+    }
+
+    #[test]
+    #[ignore]
+    fn test_binary_run() {
+
     }
 }

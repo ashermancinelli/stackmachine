@@ -1,4 +1,3 @@
-use crate::stackmachine::Function;
 use crate::stackmachine::Op;
 use crate::stackmachine::StackMachine;
 
@@ -124,7 +123,6 @@ impl Builder {
 mod builder_test {
 
     use super::Builder;
-    use super::Function;
     use super::Op;
 
     #[test]
@@ -237,7 +235,7 @@ mod builder_test {
     #[test]
     fn test_builder_call() {
         let mut builder = Builder::new(2u32.pow(16));
-        builder.sm.function_table = vec![Function::new(vec![(Op::Add, None)])];
+        builder.sm.function_table = vec![vec![(Op::Add, None)]];
 
         builder.r#const(5).r#const(3).call(0).execute();
 

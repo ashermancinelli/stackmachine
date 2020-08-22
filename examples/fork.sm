@@ -1,0 +1,9 @@
+fork
+child
+if
+  const 7
+  dbg
+else
+  const 9
+  dbg
+endif

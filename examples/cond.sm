@@ -1,0 +1,8 @@
+const 5
+eq 5
+if
+  const 5
+else
+  const 4
+endif
+dbg

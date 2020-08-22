@@ -1,5 +1,4 @@
 use std::env;
-use std::io::{Error, ErrorKind};
 use std::path::Path;
 use stackmachine::stackmachine::{reader, StackMachine};
 

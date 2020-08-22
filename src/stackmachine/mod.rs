@@ -1,21 +1,19 @@
 use std::fmt;
-use std::ptr;
-use std::iter::FromIterator;
 use std::thread;
 
-pub mod builder;
 pub mod function;
 pub mod reader;
+pub mod builder;
 
-pub type Builder = builder::Builder;
-pub type Function = function::Function;
-pub type Op = function::op::Operation;
+pub use crate::stackmachine::function::Function;
+pub use crate::stackmachine::function::Op;
+pub use crate::stackmachine::builder::Builder;
 
 pub struct StackMachine {
     pub stack: Vec<i32>,
     pub memory: Vec<u8>,
-    pub ext_functions: Vec<Box<dyn Fn(&StackMachine)>>,
-    pub function_table: Vec<Function>,
+    pub ext_functions: Vec<Function>,
+    pub function_table: Vec<Vec<(Op, Option<i32>)>>,
     pub pid: u16,
     pub child: bool,
 }
@@ -54,19 +52,19 @@ impl StackMachine {
     }
 
     pub fn call_func(&mut self, fn_id: u8) {
-        self.execute(self.function_table[fn_id as usize].code.clone());
+        self.execute(self.function_table[fn_id as usize].clone());
     }
 
     pub fn call_func_ext(&mut self, fn_id: u8) {
-        (self.ext_functions[fn_id as usize])(&self);
+        (self.ext_functions[fn_id as usize])(&mut self.stack);
     }
 
     pub fn new(memsize: u32) -> StackMachine {
         return StackMachine {
-            stack: Vec::new(),
+            stack: Vec::<i32>::new(),
             memory: Vec::with_capacity(memsize as usize),
-            ext_functions: Vec::<Box<dyn Fn(&StackMachine)>>::new(),
-            function_table: Vec::<Function>::new(),
+            ext_functions: Vec::<Function>::new(),
+            function_table: Vec::<Vec<(Op, Option<i32>)>>::new(),
             pid: 0,
             child: false,
         };
@@ -181,7 +179,9 @@ impl StackMachine {
     }
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
-        println!("Executing routine: {:?}", code);
+
+        // println!("Executing routine: {:?}", code);
+
         self.syntax_check(&code);
         let mut children = vec![];
         let mut index = 0;
