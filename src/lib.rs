@@ -3,11 +3,11 @@ pub mod stackmachine;
 #[cfg(test)]
 pub mod tests {
 
+    use super::stackmachine::builder::Builder;
     use super::stackmachine::function::Function;
     use super::stackmachine::function::Op;
-    use super::stackmachine::StackMachine;
     use super::stackmachine::reader;
-    use super::stackmachine::builder::Builder;
+    use super::stackmachine::StackMachine;
 
     #[test]
     pub fn test_add() {
@@ -186,8 +186,12 @@ pub mod tests {
     }
 
     #[test]
+    /**
+     * Should perhaps write out to a file an example so not to rely
+     * on the examples remaining exactly the same
+     */
     fn test_read() {
-        let code = reader::read(&String::from("examples/adder.sm"));
+        let _ = reader::read(&String::from("examples/adder.sm"));
     }
 
     #[test]
@@ -199,13 +203,9 @@ pub mod tests {
 
     #[test]
     #[ignore]
-    fn test_cli() {
-
-    }
+    fn test_cli() {}
 
     #[test]
     #[ignore]
-    fn test_binary_run() {
-
-    }
+    fn test_binary_run() {}
 }

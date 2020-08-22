@@ -1,13 +1,13 @@
 use std::fmt;
 use std::thread;
 
+pub mod builder;
 pub mod function;
 pub mod reader;
-pub mod builder;
 
+pub use crate::stackmachine::builder::Builder;
 pub use crate::stackmachine::function::Function;
 pub use crate::stackmachine::function::Op;
-pub use crate::stackmachine::builder::Builder;
 
 pub struct StackMachine {
     pub stack: Vec<i32>,
@@ -75,7 +75,8 @@ impl StackMachine {
         // default to false if `if` statement appears with empty stack
         let a = self.pop().unwrap_or(0);
 
-        if a > 0 { // The condition was met
+        if a > 0 {
+            // The condition was met
 
             // nesting level for conditional statements
             let mut nest = 1;
@@ -85,12 +86,13 @@ impl StackMachine {
                 nest += match code[*index] {
                     (Op::Else, _) => {
                         if nest == 1 {
-                            self.execute(code
-                                         .iter()
-                                         .cloned()
-                                         .skip(start)
-                                         .take(*index - start)
-                                         .collect());
+                            self.execute(
+                                code.iter()
+                                    .cloned()
+                                    .skip(start)
+                                    .take(*index - start)
+                                    .collect(),
+                            );
                             *index += code
                                 .iter()
                                 .cloned()
@@ -107,14 +109,15 @@ impl StackMachine {
                 };
             }
             // Execute through the end of the if block
-            self.execute(code
-                         .iter()
-                         .cloned()
-                         .skip(start)
-                         .take(*index-start)
-                         .collect());
-
-        } else { // The condition was not met
+            self.execute(
+                code.iter()
+                    .cloned()
+                    .skip(start)
+                    .take(*index - start)
+                    .collect(),
+            );
+        } else {
+            // The condition was not met
 
             if *index == code.len() {
                 return;
@@ -144,12 +147,13 @@ impl StackMachine {
             }
 
             if let Some(idx) = else_idx {
-                self.execute(code
-                             .iter()
-                             .cloned()
-                             .skip(idx+1)
-                             .take(*index - idx - 1)
-                             .collect());
+                self.execute(
+                    code.iter()
+                        .cloned()
+                        .skip(idx + 1)
+                        .take(*index - idx - 1)
+                        .collect(),
+                );
             }
         }
     }
@@ -158,7 +162,7 @@ impl StackMachine {
     // errors are encountered.
     pub fn syntax_check(&self, code: &Vec<(Op, Option<i32>)>) {
         let mut ifs = 0;
-        let mut endifs = 0; 
+        let mut endifs = 0;
         let mut elses = 0;
         for (op, _) in code {
             match op {
@@ -179,7 +183,6 @@ impl StackMachine {
     }
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
-
         // println!("Executing routine: {:?}", code);
 
         self.syntax_check(&code);
@@ -221,8 +224,7 @@ impl StackMachine {
                     let a = self.pop().unwrap();
                     if a == arg.unwrap() {
                         self.push(1);
-                    }
-                    else {
+                    } else {
                         self.push(0);
                     }
                 }
@@ -251,21 +253,23 @@ impl StackMachine {
                     let child_code = code
                         .iter()
                         .cloned()
-                        .skip(index+1) // omitting the +1 leades to infinite threads
+                        .skip(index + 1) // omitting the +1 leades to infinite threads
                         .collect();
                     let stack = self.stack.clone();
                     let child_pid = self.pid * 2 + 1;
                     self.child = false;
-                    children.push(thread::Builder::new()
-                        .name(format!("Thread<{}>", child_pid).to_string())
-                        .spawn(move || {
-                            let mut sm = StackMachine::new(2u32.pow(16));
-                            sm.pid = child_pid;
-                            sm.stack = stack;
-                            sm.child = true;
-                            sm.execute(child_code);
-                        })
-                        .expect("Could not spawn thread"));
+                    children.push(
+                        thread::Builder::new()
+                            .name(format!("Thread<{}>", child_pid).to_string())
+                            .spawn(move || {
+                                let mut sm = StackMachine::new(2u32.pow(16));
+                                sm.pid = child_pid;
+                                sm.stack = stack;
+                                sm.child = true;
+                                sm.execute(child_code);
+                            })
+                            .expect("Could not spawn thread"),
+                    );
                 }
                 Op::GetPid => {
                     self.push(self.pid.into());

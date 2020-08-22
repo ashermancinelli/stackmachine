@@ -13,7 +13,9 @@ pub struct Reader {
 // Taken from rust documentation
 // https://doc.rust-lang.org/stable/rust-by-example/std_misc/file/read_lines.html
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
@@ -22,10 +24,7 @@ fn parse_opcode(line: &std::string::String) -> Option<(Op, Option<i32>)> {
     if line.len() == 0 {
         return None;
     }
-    let strargs = String::from(line
-        .to_ascii_lowercase()
-        .as_str()
-        .trim());
+    let strargs = String::from(line.to_ascii_lowercase().as_str().trim());
 
     let args = strargs
         .split(" ")
@@ -41,7 +40,7 @@ fn parse_opcode(line: &std::string::String) -> Option<(Op, Option<i32>)> {
     }
 
     let res = match args[0] {
-        "const" => Some( Op::Const ),
+        "const" => Some(Op::Const),
         "add" => Some(Op::Add),
         "sub" => Some(Op::Sub),
         "mul" => Some(Op::Mul),

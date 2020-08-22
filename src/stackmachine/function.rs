@@ -38,8 +38,8 @@ pub type Function = fn(&mut Vec<i32>);
 
 #[cfg(test)]
 mod function_tests {
-    use super::Op;
     use super::Function;
+    use super::Op;
     use crate::stackmachine::StackMachine;
 
     #[test]
@@ -68,8 +68,7 @@ mod function_tests {
                 nargs -= 1;
             }
             stack.push(total);
-        }
-        else {
+        } else {
             stack.push(-1);
         }
     }
@@ -82,9 +81,7 @@ mod function_tests {
         sm.push(2);
         sm.push(2);
         sm.push(3);
-        sm.execute(vec![
-            (Op::CallExt, Some(0)),
-        ]);
+        sm.execute(vec![(Op::CallExt, Some(0))]);
         assert_eq!(sm.last(), Some(6));
     }
 }
