@@ -202,6 +202,18 @@ pub mod tests {
     }
 
     #[test]
+    fn test_pushstr() {
+
+    }
+
+    #[test]
+    #[ignore]
+    fn test_ext_function_() {
+        // let mut sm = StackMachine::new(2u32.pow(8));
+        // sm.execute(vec![(Op::Const, Some(1i32)), (Op::Not, None)]);
+    }
+
+    #[test]
     #[ignore]
     fn test_cli() {}
 

@@ -1,5 +1,8 @@
 use std::fmt;
+use std::io::{self, Write};
+use std::char;
 use std::thread;
+use std::collections::HashMap;
 
 pub mod builder;
 pub mod function;
@@ -9,16 +12,18 @@ pub use crate::stackmachine::builder::Builder;
 pub use crate::stackmachine::function::Function;
 pub use crate::stackmachine::function::Op;
 
-pub struct StackMachine {
+pub struct StackMachine<'a> {
     pub stack: Vec<i32>,
     pub memory: Vec<u8>,
     pub ext_functions: Vec<Function>,
+    pub ext_functions_: HashMap<&'a str, Function>,
     pub function_table: Vec<Vec<(Op, Option<i32>)>>,
     pub pid: u16,
+    pub child_pid: u16,
     pub child: bool,
 }
 
-impl StackMachine {
+impl<'a> StackMachine<'a> {
     pub fn last(&self) -> Option<i32> {
         if self.stack.len() == 0 {
             return None;
@@ -59,102 +64,117 @@ impl StackMachine {
         (self.ext_functions[fn_id as usize])(&mut self.stack);
     }
 
-    pub fn new(memsize: u32) -> StackMachine {
-        return StackMachine {
+    pub fn new(memsize: u32) -> StackMachine<'a> {
+        StackMachine {
             stack: Vec::<i32>::new(),
             memory: Vec::with_capacity(memsize as usize),
             ext_functions: Vec::<Function>::new(),
+            ext_functions_: HashMap::<&'a str, Function>::new(),
             function_table: Vec::<Vec<(Op, Option<i32>)>>::new(),
             pid: 0,
+            child_pid: 0,
             child: false,
-        };
+        }
     }
 
     fn r#if(&mut self, index: &mut usize, code: &mut Vec<(Op, Option<i32>)>) {
-        // Value that represents the conditional
-        // default to false if `if` statement appears with empty stack
-        let a = self.pop().unwrap_or(0);
+        // _a_ is the value that represents the conditional
+        if let Some(a) = self.pop() {
+            if a > 0 { // The condition was met
 
-        if a > 0 {
-            // The condition was met
-
-            // nesting level for conditional statements
-            let mut nest = 1;
-            let start = *index + 1;
-            while nest > 0 {
-                *index += 1;
-                nest += match code[*index] {
-                    (Op::Else, _) => {
-                        if nest == 1 {
-                            self.execute(
-                                code.iter()
+                /*
+                 * Search for either an EndIf statement that matches the same
+                 * nesting level or an else block that matches the same nesting
+                 * level. 
+                 *
+                 * If an Else is found, the index is incremented to the end of the
+                 * `EndIf` statement, not the `Else` statement.
+                 */
+                let mut nest = 1;
+                let start = *index + 1;
+                while nest > 0 {
+                    *index += 1;
+                    nest += match code[*index] {
+                        (Op::Else, _) => {
+                            if nest == 1 {
+                                self.execute(
+                                    code.iter()
+                                        .cloned()
+                                        .skip(start)
+                                        .take(*index - start)
+                                        .collect(),
+                                );
+                                *index += code
+                                    .iter()
                                     .cloned()
-                                    .skip(start)
-                                    .take(*index - start)
-                                    .collect(),
-                            );
-                            *index += code
-                                .iter()
-                                .cloned()
-                                .skip(*index)
-                                .take_while(|(x, _)| *x != Op::EndIf)
-                                .count();
-                            return;
+                                    .skip(*index)
+                                    .take_while(|(x, _)| *x != Op::EndIf)
+                                    .count();
+                                return;
+                            }
+                            0
                         }
-                        0
-                    }
-                    (Op::EndIf, _) => -1,
-                    (Op::If, _) => 1,
-                    _ => 0,
-                };
-            }
-            // Execute through the end of the if block
-            self.execute(
-                code.iter()
-                    .cloned()
-                    .skip(start)
-                    .take(*index - start)
-                    .collect(),
-            );
-        } else {
-            // The condition was not met
-
-            if *index == code.len() {
-                return;
-            }
-
-            let mut nest = 1;
-            let mut else_idx = None; // starting index of else block
-            while nest > 0 {
-                match code[*index] {
-                    (Op::EndIf, _) => {
-                        nest -= 1;
-                        if nest == 1 {
-                            break;
-                        }
-                    }
-                    (Op::Else, _) => {
-                        if nest == 1 {
-                            else_idx = Some(*index);
-                        }
-                    }
-                    (Op::If, _) => {
-                        nest += 1;
-                    }
-                    _ => (),
-                };
-                *index += 1;
-            }
-
-            if let Some(idx) = else_idx {
+                        (Op::EndIf, _) => -1,
+                        (Op::If, _) => 1,
+                        _ => 0,
+                    };
+                }
+                // Execute through the end of the if block
                 self.execute(
                     code.iter()
                         .cloned()
-                        .skip(idx + 1)
-                        .take(*index - idx - 1)
+                        .skip(start)
+                        .take(*index - start)
                         .collect(),
                 );
+            } else { // The condition was not met
+
+                if *index == code.len() {
+                    return;
+                }
+
+                /*
+                 * Find a matching else block that corresponds with the current
+                 * level of `if` block. If not found, the condition after this for
+                 * loop will fall through and execution will pick up at the end of
+                 * the `if` block.
+                 */
+                let mut nest = 1;
+                let mut else_idx = None; // starting index of else block
+                while nest > 0 {
+                    match code[*index] {
+                        (Op::EndIf, _) => {
+                            nest -= 1;
+                            if nest == 1 {
+                                break;
+                            }
+                        }
+                        (Op::Else, _) => {
+                            if nest == 1 {
+                                else_idx = Some(*index);
+                            }
+                        }
+                        (Op::If, _) => {
+                            nest += 1;
+                        }
+                        _ => (),
+                    };
+                    *index += 1;
+                }
+
+                if let Some(idx) = else_idx {
+                    self.execute(
+                        code.iter()
+                            .cloned()
+                            .skip(idx + 1)
+                            .take(*index - idx - 1)
+                            .collect(),
+                    );
+                }
             }
+        }
+        else {
+            panic!("`if` statement called without anything on the stack!");
         }
     }
 
@@ -164,11 +184,15 @@ impl StackMachine {
         let mut ifs = 0;
         let mut endifs = 0;
         let mut elses = 0;
+        let mut fns = 0;
+        let mut endfns = 0;
         for (op, _) in code {
             match op {
                 Op::If => ifs += 1,
                 Op::EndIf => endifs += 1,
                 Op::Else => elses += 1,
+                Op::Function => fns += 1,
+                Op::EndFunction => endfns += 1,
                 _ => (),
             }
         }
@@ -176,6 +200,10 @@ impl StackMachine {
         if ifs != endifs {
             panic!("Each `if` must have a matching `endif`. Got {} if statements and {} endif statements.",
                    ifs, endifs);
+        }
+        if fns != endfns {
+            panic!("Each `function` must have a matching `endfunction`. Got {} function statements and {} endfunction statements.",
+                   fns, endfns);
         }
         if elses > ifs {
             panic!("`Else` may appear max of one time per if block.");
@@ -186,7 +214,7 @@ impl StackMachine {
         // println!("Executing routine: {:?}", code);
 
         self.syntax_check(&code);
-        let mut children = vec![];
+        let mut children = Vec::<thread::JoinHandle<_>>::new();
         let mut index = 0;
         loop {
             if index >= code.len() {
@@ -242,13 +270,16 @@ impl StackMachine {
                         self.push(0);
                     }
                 }
-                Op::EndIf | Op::EndFunction | Op::Return | Op::Else => {
+                Op::EndFunction | Op::Return => {
                     return;
                 }
+                Op::Else | Op::EndIf => panic!("Each `else` or `endif` must have a matching `if` statement!"),
                 // Simluates a fork system call using threads.
                 // Creates a new stack machine on the new thread, pushes the
                 // rest of the code to currently being executed on this stack
                 // machine, and sets the child's PID and 'child' member.
+                //
+                // TODO: favor a rudimentary scheduler instead of using threads
                 Op::Fork => {
                     let child_code = code
                         .iter()
@@ -256,7 +287,8 @@ impl StackMachine {
                         .skip(index + 1) // omitting the +1 leades to infinite threads
                         .collect();
                     let stack = self.stack.clone();
-                    let child_pid = self.pid * 2 + 1;
+                    self.child_pid *= 2;
+                    let child_pid = self.child_pid + 1;
                     self.child = false;
                     children.push(
                         thread::Builder::new()
@@ -290,6 +322,18 @@ impl StackMachine {
                 Op::CallExt => {
                     self.call_func_ext(arg.unwrap() as u8);
                 }
+                Op::PrintStr => {
+                    while let Some(v) = self.pop() {
+                        if v == 0 {
+                            break;
+                        }
+                        else {
+                            print!("{}", (v as u8) as char);
+                        }
+                    }
+                    println!("");
+                    io::stdout().flush().unwrap();
+                }
                 Op::Print => {
                     println!("{}", self.last().unwrap());
                 }
@@ -308,7 +352,7 @@ impl StackMachine {
     }
 }
 
-impl fmt::Display for StackMachine {
+impl<'a> fmt::Display for StackMachine<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "StackMachine<{}, {:?}>", self.pid, self.stack)
     }

@@ -1,13 +1,13 @@
 use crate::stackmachine::Op;
 use crate::stackmachine::StackMachine;
 
-pub struct Builder {
-    pub sm: StackMachine,
+pub struct Builder<'a> {
+    pub sm: StackMachine<'a>,
     pub code: Vec<(Op, Option<i32>)>,
 }
 
-impl Builder {
-    pub fn new(memsize: u32) -> Builder {
+impl<'a> Builder<'a> {
+    pub fn new(memsize: u32) -> Builder<'a> {
         return Builder {
             sm: StackMachine::new(memsize),
             code: Vec::new(),
@@ -18,97 +18,97 @@ impl Builder {
         self.code.push(line);
     }
 
-    pub fn print(&mut self) -> &mut Builder {
+    pub fn print(&mut self) -> &mut Builder<'a> {
         self.push((Op::Print, None));
         return self;
     }
 
-    pub fn r#const(&mut self, arg: i32) -> &mut Builder {
+    pub fn r#const(&mut self, arg: i32) -> &mut Builder<'a> {
         self.push((Op::Const, Some(arg)));
         return self;
     }
 
-    pub fn add(&mut self) -> &mut Builder {
+    pub fn add(&mut self) -> &mut Builder<'a> {
         self.push((Op::Add, None));
         return self;
     }
 
-    pub fn sub(&mut self) -> &mut Builder {
+    pub fn sub(&mut self) -> &mut Builder<'a> {
         self.push((Op::Sub, None));
         return self;
     }
 
-    pub fn mul(&mut self) -> &mut Builder {
+    pub fn mul(&mut self) -> &mut Builder<'a> {
         self.push((Op::Mul, None));
         return self;
     }
 
-    pub fn div(&mut self) -> &mut Builder {
+    pub fn div(&mut self) -> &mut Builder<'a> {
         self.push((Op::Div, None));
         return self;
     }
 
-    pub fn call(&mut self, arg: i32) -> &mut Builder {
+    pub fn call(&mut self, arg: i32) -> &mut Builder<'a> {
         self.push((Op::Call, Some(arg)));
         return self;
     }
 
-    pub fn call_ext(&mut self, arg: i32) -> &mut Builder {
+    pub fn call_ext(&mut self, arg: i32) -> &mut Builder<'a> {
         self.push((Op::CallExt, Some(arg)));
         return self;
     }
 
-    pub fn fork(&mut self) -> &mut Builder {
+    pub fn fork(&mut self) -> &mut Builder<'a> {
         self.push((Op::Fork, None));
         return self;
     }
 
-    pub fn child(&mut self) -> &mut Builder {
+    pub fn child(&mut self) -> &mut Builder<'a> {
         self.push((Op::Child, None));
         return self;
     }
 
-    pub fn r#if(&mut self) -> &mut Builder {
+    pub fn r#if(&mut self) -> &mut Builder<'a> {
         self.push((Op::If, None));
         return self;
     }
 
-    pub fn eq(&mut self) -> &mut Builder {
+    pub fn eq(&mut self) -> &mut Builder<'a> {
         self.push((Op::r#Eq, None));
         return self;
     }
 
-    pub fn not(&mut self) -> &mut Builder {
+    pub fn not(&mut self) -> &mut Builder<'a> {
         self.push((Op::Not, None));
         return self;
     }
 
-    pub fn gt(&mut self) -> &mut Builder {
+    pub fn gt(&mut self) -> &mut Builder<'a> {
         self.push((Op::GT, None));
         return self;
     }
 
-    pub fn lt(&mut self) -> &mut Builder {
+    pub fn lt(&mut self) -> &mut Builder<'a> {
         self.push((Op::LT, None));
         return self;
     }
 
-    pub fn gte(&mut self) -> &mut Builder {
+    pub fn gte(&mut self) -> &mut Builder<'a> {
         self.push((Op::GTE, None));
         return self;
     }
 
-    pub fn lte(&mut self) -> &mut Builder {
+    pub fn lte(&mut self) -> &mut Builder<'a> {
         self.push((Op::LTE, None));
         return self;
     }
 
-    pub fn end_if(&mut self) -> &mut Builder {
+    pub fn end_if(&mut self) -> &mut Builder<'a> {
         self.push((Op::EndIf, None));
         return self;
     }
 
-    pub fn get_pid(&mut self) -> &mut Builder {
+    pub fn get_pid(&mut self) -> &mut Builder<'a> {
         self.push((Op::GetPid, None));
         return self;
     }

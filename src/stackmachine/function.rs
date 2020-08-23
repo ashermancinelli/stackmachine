@@ -8,8 +8,10 @@ pub enum Op {
     Mul,
     Div,
     Print,
+    PrintStr,
     Pop,
     Push,
+    PushStr,
     Noop,
     Block,
     Loop,
@@ -32,6 +34,7 @@ pub enum Op {
     GetPid,
     Child,
     Debug,
+    Include,
 }
 
 pub type Function = fn(&mut Vec<i32>);
@@ -52,7 +55,7 @@ mod function_tests {
         assert_eq!(Some(3), sm.pop());
     }
 
-    fn sumN(stack: &mut Vec<i32>) {
+    fn sum_n(stack: &mut Vec<i32>) {
         if let Some(mut nargs) = stack.pop() {
             let mut total = 0;
             while nargs > 0 {
@@ -76,7 +79,7 @@ mod function_tests {
     #[test]
     fn test_ext_function() {
         let mut sm = StackMachine::new(2u32);
-        sm.ext_functions = vec![sumN];
+        sm.ext_functions = vec![sum_n];
         sm.push(2);
         sm.push(2);
         sm.push(2);
