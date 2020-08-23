@@ -77,6 +77,7 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
         "gte" => Some(Op::GTE),
         "lte" => Some(Op::LTE),
         "eq" => Some(Op::r#Eq),
+        "call" => Some(Op::Call),
         "function" => Some(Op::Function),
         "endfunction" => Some(Op::EndFunction),
         "return" => Some(Op::Return),
@@ -137,8 +138,9 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
             return;
         }
         code.push((op, None));
-    } else {
-        panic!("Could not parse opcode.");
+    }
+    else {
+        panic!("Could not parse opcode from {:?}.", args);
     }
 }
 

@@ -192,7 +192,7 @@ pub mod tests {
     }
 
     #[test]
-    /**
+    /*
      * Should perhaps write out to a file an example so not to rely
      * on the examples remaining exactly the same
      */
@@ -208,22 +208,32 @@ pub mod tests {
     }
 
     #[test]
-    fn test_pushstr() {
-
-    }
+    #[ignore]
+    /*
+     * Will have to deal with strings to test how this is parsed into each
+     * individual `const` call
+     */
+    fn test_pushstr() {}
 
     #[test]
     #[ignore]
-    fn test_ext_function_() {
-        // let mut sm = StackMachine::new(2u32.pow(8));
-        // sm.execute(vec![(Op::Const, Some(1i32)), (Op::Not, None)]);
-    }
+    /*
+     * test defining an external function and binding it to a value in the
+     * function table
+     */
+    fn test_ext_function_() {}
 
     #[test]
     #[ignore]
+    /*
+     * Test argument handling of final binary
+     */
     fn test_cli() {}
 
     #[test]
     #[ignore]
+    /*
+     * Call subprocs to run the final binary on test `.sm` files
+     */
     fn test_binary_run() {}
 }

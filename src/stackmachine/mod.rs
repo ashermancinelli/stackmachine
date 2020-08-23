@@ -292,17 +292,19 @@ impl StackMachine {
                     }
                 }
                 Op::Function => {
-                    let fn_body = code
+                    let fn_body: Vec<(Op, Option<i32>)> = code
                         .iter()
                         .cloned()
-                        .skip(index + 1)
-                        .take_while(|(o, _)| *o == Op::EndFunction)
+                        .skip(index+1)
+                        .take_while(|(o, _)| *o != Op::EndFunction)
                         .collect();
+                    index += fn_body.len() + 1;
                     let key = self.collect_str();
+
+                    #[cfg(debug_assertions)]
+                    println!("{} => {:?} ({} lines)", key, fn_body, fn_body.len());
+
                     self.function_table.insert(key, fn_body);
-                }
-                Op::EndFunction | Op::Return => {
-                    return;
                 }
                 Op::Else | Op::EndIf => panic!("Each `else` or `endif` must have a matching `if` statement!"),
                 // Simluates a fork system call using threads.

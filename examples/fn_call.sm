@@ -1,0 +1,16 @@
+
+# Define function called `callme`
+pushstr callme
+function
+  add
+endfunction
+
+# Call function with two parameters
+const 2
+const 3
+pushstr callme
+call
+
+pushstr Expecting value of `5`
+printstr
+dbg
