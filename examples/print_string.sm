@@ -1,4 +1,8 @@
 const 5
-pushstr testing
-printstr
+pushstr Testing the print string functionality
+
+# This will show all the char values on the stack
 dbg
+
+# print the string out
+printstr

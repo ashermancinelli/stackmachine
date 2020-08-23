@@ -49,7 +49,7 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
     if line.len() == 0 {
         return;
     }
-    let strargs = String::from(line.to_ascii_lowercase().as_str().trim());
+    let strargs = String::from(line.as_str().trim());
 
     let args = strargs
         .split(" ")
@@ -60,7 +60,7 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
         return;
     }
 
-    let res = match args[0] {
+    let res = match args[0].to_ascii_lowercase().as_str() {
         "const" => Some(Op::Const),
         "add" => Some(Op::Add),
         "sub" => Some(Op::Sub),

@@ -6,7 +6,10 @@ getpid
 eq
 if
   const 1
+  pushstr expecting 1
 else
   const 2
+  pushstr expecting 2
 endif
-print
+printstr
+dbg
