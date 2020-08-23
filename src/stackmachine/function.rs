@@ -48,11 +48,22 @@ mod function_tests {
     #[test]
     fn test_function_table() {
         let mut sm = StackMachine::new(2u32);
-        sm.function_table = vec![vec![(Op::Const, Some(3))]];
 
-        sm.execute(vec![(Op::Call, Some(0))]);
+        sm.function_table.insert(
+            "fn".to_string(),
+            vec![(Op::Add, None)]
+            );
 
-        assert_eq!(Some(3), sm.pop());
+        sm.execute(vec![
+            (Op::Const, Some(3i32)),
+            (Op::Const, Some(2i32)),
+            (Op::Const, Some(0i32)), // Char codes for 'fn'
+            (Op::Const, Some(110i32)),
+            (Op::Const, Some(102i32)),
+            (Op::Call, None), // External adding func
+        ]);
+
+        assert_eq!(Some(2 + 3), sm.pop());
     }
 
     fn sum_n(stack: &mut Vec<i32>) {

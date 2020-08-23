@@ -1,13 +1,13 @@
 use crate::stackmachine::Op;
 use crate::stackmachine::StackMachine;
 
-pub struct Builder<'a> {
-    pub sm: StackMachine<'a>,
+pub struct Builder {
+    pub sm: StackMachine,
     pub code: Vec<(Op, Option<i32>)>,
 }
 
-impl<'a> Builder<'a> {
-    pub fn new(memsize: u32) -> Builder<'a> {
+impl Builder {
+    pub fn new(memsize: u32) -> Builder {
         return Builder {
             sm: StackMachine::new(memsize),
             code: Vec::new(),
@@ -18,97 +18,97 @@ impl<'a> Builder<'a> {
         self.code.push(line);
     }
 
-    pub fn print(&mut self) -> &mut Builder<'a> {
+    pub fn print(&mut self) -> &mut Builder {
         self.push((Op::Print, None));
         return self;
     }
 
-    pub fn r#const(&mut self, arg: i32) -> &mut Builder<'a> {
+    pub fn r#const(&mut self, arg: i32) -> &mut Builder {
         self.push((Op::Const, Some(arg)));
         return self;
     }
 
-    pub fn add(&mut self) -> &mut Builder<'a> {
+    pub fn add(&mut self) -> &mut Builder {
         self.push((Op::Add, None));
         return self;
     }
 
-    pub fn sub(&mut self) -> &mut Builder<'a> {
+    pub fn sub(&mut self) -> &mut Builder {
         self.push((Op::Sub, None));
         return self;
     }
 
-    pub fn mul(&mut self) -> &mut Builder<'a> {
+    pub fn mul(&mut self) -> &mut Builder {
         self.push((Op::Mul, None));
         return self;
     }
 
-    pub fn div(&mut self) -> &mut Builder<'a> {
+    pub fn div(&mut self) -> &mut Builder {
         self.push((Op::Div, None));
         return self;
     }
 
-    pub fn call(&mut self, arg: i32) -> &mut Builder<'a> {
-        self.push((Op::Call, Some(arg)));
+    pub fn call(&mut self) -> &mut Builder {
+        self.push((Op::Call, None));
         return self;
     }
 
-    pub fn call_ext(&mut self, arg: i32) -> &mut Builder<'a> {
-        self.push((Op::CallExt, Some(arg)));
+    pub fn call_ext(&mut self) -> &mut Builder {
+        self.push((Op::CallExt, None));
         return self;
     }
 
-    pub fn fork(&mut self) -> &mut Builder<'a> {
+    pub fn fork(&mut self) -> &mut Builder {
         self.push((Op::Fork, None));
         return self;
     }
 
-    pub fn child(&mut self) -> &mut Builder<'a> {
+    pub fn child(&mut self) -> &mut Builder {
         self.push((Op::Child, None));
         return self;
     }
 
-    pub fn r#if(&mut self) -> &mut Builder<'a> {
+    pub fn r#if(&mut self) -> &mut Builder {
         self.push((Op::If, None));
         return self;
     }
 
-    pub fn eq(&mut self) -> &mut Builder<'a> {
+    pub fn eq(&mut self) -> &mut Builder {
         self.push((Op::r#Eq, None));
         return self;
     }
 
-    pub fn not(&mut self) -> &mut Builder<'a> {
+    pub fn not(&mut self) -> &mut Builder {
         self.push((Op::Not, None));
         return self;
     }
 
-    pub fn gt(&mut self) -> &mut Builder<'a> {
+    pub fn gt(&mut self) -> &mut Builder {
         self.push((Op::GT, None));
         return self;
     }
 
-    pub fn lt(&mut self) -> &mut Builder<'a> {
+    pub fn lt(&mut self) -> &mut Builder {
         self.push((Op::LT, None));
         return self;
     }
 
-    pub fn gte(&mut self) -> &mut Builder<'a> {
+    pub fn gte(&mut self) -> &mut Builder {
         self.push((Op::GTE, None));
         return self;
     }
 
-    pub fn lte(&mut self) -> &mut Builder<'a> {
+    pub fn lte(&mut self) -> &mut Builder {
         self.push((Op::LTE, None));
         return self;
     }
 
-    pub fn end_if(&mut self) -> &mut Builder<'a> {
+    pub fn end_if(&mut self) -> &mut Builder {
         self.push((Op::EndIf, None));
         return self;
     }
 
-    pub fn get_pid(&mut self) -> &mut Builder<'a> {
+    pub fn get_pid(&mut self) -> &mut Builder {
         self.push((Op::GetPid, None));
         return self;
     }
@@ -235,10 +235,20 @@ mod builder_test {
     #[test]
     fn test_builder_call() {
         let mut builder = Builder::new(2u32.pow(16));
-        builder.sm.function_table = vec![vec![(Op::Add, None)]];
+        builder.sm.function_table.insert(
+            "fn".to_string(),
+            vec![(Op::Add, None)]
+            );
 
-        builder.r#const(5).r#const(3).call(0).execute();
+        builder
+            .r#const(5)
+            .r#const(3)
+            .r#const(0) // char codes for "fn"
+            .r#const(110)
+            .r#const(102)
+            .call()
+            .execute();
 
-        assert_eq!(Some(8), builder.sm.last());
+        assert_eq!(Some(5 + 3), builder.sm.last());
     }
 }

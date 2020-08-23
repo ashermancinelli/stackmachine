@@ -1,5 +1,4 @@
 use std::fmt;
-use std::io::{self, Write};
 use std::char;
 use std::thread;
 use std::collections::HashMap;
@@ -12,18 +11,18 @@ pub use crate::stackmachine::builder::Builder;
 pub use crate::stackmachine::function::Function;
 pub use crate::stackmachine::function::Op;
 
-pub struct StackMachine<'a> {
+pub struct StackMachine {
     pub stack: Vec<i32>,
     pub memory: Vec<u8>,
     pub ext_functions: Vec<Function>,
-    pub ext_functions_: HashMap<&'a str, Function>,
-    pub function_table: Vec<Vec<(Op, Option<i32>)>>,
+    pub ext_functions_: HashMap<String, Function>,
+    pub function_table: HashMap<String, Vec<(Op, Option<i32>)>>,
     pub pid: u16,
     pub child_pid: u16,
     pub child: bool,
 }
 
-impl<'a> StackMachine<'a> {
+impl StackMachine {
     pub fn last(&self) -> Option<i32> {
         if self.stack.len() == 0 {
             return None;
@@ -56,21 +55,32 @@ impl<'a> StackMachine<'a> {
         self.push(a / b);
     }
 
-    pub fn call_func(&mut self, fn_id: u8) {
-        self.execute(self.function_table[fn_id as usize].clone());
-    }
-
     pub fn call_func_ext(&mut self, fn_id: u8) {
         (self.ext_functions[fn_id as usize])(&mut self.stack);
     }
 
-    pub fn new(memsize: u32) -> StackMachine<'a> {
+    pub fn collect_str(&mut self) -> String {
+        let mut res = String::new();
+        loop {
+            if let Some(v) = self.pop() {
+                if v == 0 {
+                    break;
+                }
+                else {
+                    res.push((v as u8) as char);
+                }
+            }
+        }
+        res
+    }
+
+    pub fn new(memsize: u32) -> StackMachine {
         StackMachine {
             stack: Vec::<i32>::new(),
             memory: Vec::with_capacity(memsize as usize),
             ext_functions: Vec::<Function>::new(),
-            ext_functions_: HashMap::<&'a str, Function>::new(),
-            function_table: Vec::<Vec<(Op, Option<i32>)>>::new(),
+            ext_functions_: HashMap::<String, Function>::new(),
+            function_table: HashMap::<String, Vec<(Op, Option<i32>)>>::new(),
             pid: 0,
             child_pid: 0,
             child: false,
@@ -259,7 +269,16 @@ impl<'a> StackMachine<'a> {
                     }
                 }
                 Op::Call => {
-                    self.call_func(arg.unwrap() as u8);
+                    let key = self.collect_str();
+                    if self.function_table.contains_key(&key) {
+                        self.execute(self.function_table
+                                     .get(&key)
+                                     .unwrap()
+                                     .to_vec());
+                    }
+                    else {
+                        panic!("Function {} was called, but no definition could be found.", key);
+                    }
                 }
                 Op::If => {
                     self.r#if(&mut index, &mut code);
@@ -271,6 +290,16 @@ impl<'a> StackMachine<'a> {
                     } else {
                         self.push(0);
                     }
+                }
+                Op::Function => {
+                    let fn_body = code
+                        .iter()
+                        .cloned()
+                        .skip(index + 1)
+                        .take_while(|(o, _)| *o == Op::EndFunction)
+                        .collect();
+                    let key = self.collect_str();
+                    self.function_table.insert(key, fn_body);
                 }
                 Op::EndFunction | Op::Return => {
                     return;
@@ -325,16 +354,8 @@ impl<'a> StackMachine<'a> {
                     self.call_func_ext(arg.unwrap() as u8);
                 }
                 Op::PrintStr => {
-                    while let Some(v) = self.pop() {
-                        if v == 0 {
-                            break;
-                        }
-                        else {
-                            print!("{}", (v as u8) as char);
-                        }
-                    }
-                    println!("");
-                    io::stdout().flush().unwrap();
+                    let s = self.collect_str();
+                    println!("{}", s);
                 }
                 Op::Print => {
                     println!("{}", self.last().unwrap());
@@ -354,7 +375,7 @@ impl<'a> StackMachine<'a> {
     }
 }
 
-impl<'a> fmt::Display for StackMachine<'a> {
+impl fmt::Display for StackMachine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "StackMachine<{}, {:?}>", self.pid, self.stack)
     }

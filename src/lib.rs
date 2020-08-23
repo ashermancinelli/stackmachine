@@ -61,15 +61,21 @@ pub mod tests {
     pub fn test_call() {
         let mut sm = StackMachine::new(2u32.pow(8));
 
-        sm.function_table = vec![vec![(Op::Add, None)]];
+        sm.function_table.insert(
+            "fn".to_string(),
+            vec![(Op::Add, None)]
+            );
 
         sm.execute(vec![
-            (Op::Const, Some(6i32)),
             (Op::Const, Some(3i32)),
-            (Op::Call, Some(0)), // External adding func
+            (Op::Const, Some(2i32)),
+            (Op::Const, Some(0i32)), // Char codes for 'fn'
+            (Op::Const, Some(110i32)),
+            (Op::Const, Some(102i32)),
+            (Op::Call, None), // External adding func
         ]);
 
-        assert_eq!(Some(9), sm.pop());
+        assert_eq!(Some(3 + 2), sm.pop());
     }
 
     #[test]
