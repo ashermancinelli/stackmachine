@@ -1,8 +1,30 @@
+# Push two things that are unequal and check that the `else` condition is ran
 const 5
-eq 5
+const 4
+eq
 if
-  const 5
+  const 1
 else
-  const 4
+  const 0
 endif
+
+# Should reveal `0` on top of the stack
+pushstr Expecting 0
+printstr
+dbg
+
+
+# Push two things that are equal and check that the `if` condition is ran
+const 5
+const 5
+eq
+if
+  const 1
+else
+  const 0
+endif
+
+# Should reveal `1` on top of the stack
+pushstr Expecting 1
+printstr
 dbg

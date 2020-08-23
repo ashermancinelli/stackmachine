@@ -87,6 +87,14 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
         "print" => Some(Op::Print),
         "printstr" => Some(Op::PrintStr),
         "include" => Some(Op::Include),
+        "true" => {
+            code.push((Op::Const, Some(1)));
+            return;
+        }
+        "false" => {
+            code.push((Op::Const, Some(0)));
+            return;
+        }
         _ => None,
     };
 
@@ -110,10 +118,18 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
                         }
                     }
                 }
+                /*
+                 * Multiple strings passed to pushstr are joined by a single
+                 * space, no matter what they were originally seperated by
+                 * when pushed.
+                 */
                 Op::PushStr => {
                     code.push((Op::Const, Some(0))); // null terminate
-                    for c in args[1].chars().rev() {
-                        code.push((Op::Const, Some(c as i32)));
+                    for string in args[1..].to_vec().iter().rev() {
+                        code.push((Op::Const, Some(' ' as i32)));
+                        for c in string.chars().rev() {
+                            code.push((Op::Const, Some(c as i32)));
+                        }
                     }
                 }
                 _ => panic!("Could not parse argument to i32 and op was not a string opcode."),
@@ -130,6 +146,7 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
 pub fn read(filename: &String) -> Option<Vec<(Op, Option<i32>)>> {
     let mut code: Vec<(Op, Option<i32>)> = Vec::new();
 
+    #[cfg(debug_assertions)]
     println!("-- {}", filename);
     if let Ok(lines) = read_lines(filename) {
         for line in lines {

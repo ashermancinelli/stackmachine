@@ -142,6 +142,7 @@ impl<'a> StackMachine<'a> {
                 let mut nest = 1;
                 let mut else_idx = None; // starting index of else block
                 while nest > 0 {
+                    *index += 1;
                     match code[*index] {
                         (Op::EndIf, _) => {
                             nest -= 1;
@@ -159,7 +160,6 @@ impl<'a> StackMachine<'a> {
                         }
                         _ => (),
                     };
-                    *index += 1;
                 }
 
                 if let Some(idx) = else_idx {
@@ -211,7 +211,8 @@ impl<'a> StackMachine<'a> {
     }
 
     pub fn execute(&mut self, mut code: Vec<(Op, Option<i32>)>) {
-        // println!("Executing routine: {:?}", code);
+        #[cfg(debug_assertions)]
+        println!("Executing routine: {:?}", code);
 
         self.syntax_check(&code);
         let mut children = Vec::<thread::JoinHandle<_>>::new();
@@ -250,7 +251,8 @@ impl<'a> StackMachine<'a> {
                 }
                 Op::r#Eq => {
                     let a = self.pop().unwrap();
-                    if a == arg.unwrap() {
+                    let b = self.pop().unwrap();
+                    if a == b {
                         self.push(1);
                     } else {
                         self.push(0);
