@@ -1,5 +1,15 @@
-const 5
-pushstr Testing the print string functionality
+
+# Make sure to null-terminate the string!
+const 0
+
+# Values are pop'd off the string onto the stack, so you'll have to
+# reverse any strings you'd like to concat together
+pushstr string functionality
+
+# space character
+const 32
+
+pushstr Testing the print 
 
 # This will show all the char values on the stack
 dbg

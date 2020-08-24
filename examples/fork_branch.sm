@@ -1,15 +1,20 @@
 
-# this is a comment
+# Checks that the PID is the same as the caller, and pushes a string to
+# indicate the value the thread should expect to print
 getpid
 fork
 getpid
 eq
 if
   const 1
-  pushstr expecting 1
+  const 0
+  pushstr Expecting 1 with PID:
 else
   const 2
-  pushstr expecting 2
+  const 0
+  pushstr Expecting 2 with PID:
 endif
 printstr
+getpid
+print
 dbg
