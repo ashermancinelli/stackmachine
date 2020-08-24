@@ -1,7 +1,7 @@
-use std::fmt;
 use std::char;
-use std::thread;
 use std::collections::HashMap;
+use std::fmt;
+use std::thread;
 
 pub mod builder;
 pub mod function;
@@ -59,8 +59,7 @@ impl StackMachine {
             if let Some(v) = self.pop() {
                 if v == 0 {
                     break;
-                }
-                else {
+                } else {
                     res.push((v as u8) as char);
                 }
             }
@@ -83,12 +82,13 @@ impl StackMachine {
     fn r#if(&mut self, index: &mut usize, code: &mut Vec<(Op, Option<i32>)>) {
         // _a_ is the value that represents the conditional
         if let Some(a) = self.pop() {
-            if a > 0 { // The condition was met
+            if a > 0 {
+                // The condition was met
 
                 /*
                  * Search for either an EndIf statement that matches the same
                  * nesting level or an else block that matches the same nesting
-                 * level. 
+                 * level.
                  *
                  * If an Else is found, the index is incremented to the end of the
                  * `EndIf` statement, not the `Else` statement.
@@ -130,7 +130,8 @@ impl StackMachine {
                         .take(*index - start)
                         .collect(),
                 );
-            } else { // The condition was not met
+            } else {
+                // The condition was not met
 
                 if *index == code.len() {
                     return;
@@ -175,8 +176,7 @@ impl StackMachine {
                     );
                 }
             }
-        }
-        else {
+        } else {
             panic!("`if` statement called without anything on the stack!");
         }
     }
@@ -264,13 +264,12 @@ impl StackMachine {
                 Op::Call => {
                     let key = self.collect_str();
                     if self.function_table.contains_key(&key) {
-                        self.execute(self.function_table
-                                     .get(&key)
-                                     .unwrap()
-                                     .to_vec());
-                    }
-                    else {
-                        panic!("Function {} was called, but no definition could be found.", key);
+                        self.execute(self.function_table.get(&key).unwrap().to_vec());
+                    } else {
+                        panic!(
+                            "Function {} was called, but no definition could be found.",
+                            key
+                        );
                     }
                 }
                 Op::If => {
@@ -288,7 +287,7 @@ impl StackMachine {
                     let fn_body: Vec<(Op, Option<i32>)> = code
                         .iter()
                         .cloned()
-                        .skip(index+1)
+                        .skip(index + 1)
                         .take_while(|(o, _)| *o != Op::EndFunction)
                         .collect();
                     index += fn_body.len() + 1;
@@ -299,7 +298,9 @@ impl StackMachine {
 
                     self.function_table.insert(key, fn_body);
                 }
-                Op::Else | Op::EndIf => panic!("Each `else` or `endif` must have a matching `if` statement!"),
+                Op::Else | Op::EndIf => {
+                    panic!("Each `else` or `endif` must have a matching `if` statement!")
+                }
                 // Simluates a fork system call using threads.
                 // Creates a new stack machine on the new thread, pushes the
                 // rest of the code to currently being executed on this stack
@@ -349,9 +350,11 @@ impl StackMachine {
                     let key = self.collect_str();
                     if self.ext_functions.contains_key(&key) {
                         (self.ext_functions.get(&key).unwrap())(&mut self.stack);
-                    }
-                    else {
-                        panic!("External function {} was called, but no definition could be found.", key);
+                    } else {
+                        panic!(
+                            "External function {} was called, but no definition could be found.",
+                            key
+                        );
                     }
                 }
                 Op::PrintStr => {

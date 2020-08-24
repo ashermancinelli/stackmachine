@@ -235,10 +235,10 @@ mod builder_test {
     #[test]
     fn test_builder_call() {
         let mut builder = Builder::new(2u32.pow(16));
-        builder.sm.function_table.insert(
-            "fn".to_string(),
-            vec![(Op::Add, None)]
-            );
+        builder
+            .sm
+            .function_table
+            .insert("fn".to_string(), vec![(Op::Add, None)]);
 
         builder
             .r#const(5)

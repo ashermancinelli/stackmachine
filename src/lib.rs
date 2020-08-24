@@ -60,10 +60,8 @@ pub mod tests {
     pub fn test_call() {
         let mut sm = StackMachine::new(2u32.pow(8));
 
-        sm.function_table.insert(
-            "fn".to_string(),
-            vec![(Op::Add, None)]
-            );
+        sm.function_table
+            .insert("fn".to_string(), vec![(Op::Add, None)]);
 
         sm.execute(vec![
             (Op::Const, Some(3i32)),
@@ -209,10 +207,8 @@ pub mod tests {
     fn test_function_table() {
         let mut sm = StackMachine::new(2u32);
 
-        sm.function_table.insert(
-            "fn".to_string(),
-            vec![(Op::Add, None)]
-            );
+        sm.function_table
+            .insert("fn".to_string(), vec![(Op::Add, None)]);
 
         sm.execute(vec![
             (Op::Const, Some(3i32)),
@@ -290,10 +286,7 @@ pub mod tests {
     fn test_ext_fn_call() {
         let mut sm = StackMachine::new(2u32);
 
-        sm.ext_functions.insert(
-            "sum_n".to_string(),
-            sum_n
-            );
+        sm.ext_functions.insert("sum_n".to_string(), sum_n);
 
         sm.execute(vec![
             (Op::Const, Some(2)),

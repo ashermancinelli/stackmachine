@@ -1,7 +1,7 @@
+use std::borrow::Cow;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use std::borrow::Cow;
 
 use crate::stackmachine::Op;
 
@@ -32,14 +32,12 @@ fn resolve_path(short_path: &String) -> Result<String, ()> {
                     println!("Filepath {} was not valid UTF-8.", resolved);
                     Err(())
                 }
-            }
-        }
-        else {
+            };
+        } else {
             println!("No local file with name {}.sm was found.", pkgs[0]);
             Err(())
         }
-    }
-    else {
+    } else {
         println!("No standard library yet. Please only include local files.");
         Err(())
     }
@@ -139,8 +137,7 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
             return;
         }
         code.push((op, None));
-    }
-    else {
+    } else {
         panic!("Could not parse opcode from {:?}.", args);
     }
 }
