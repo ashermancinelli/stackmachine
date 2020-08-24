@@ -125,9 +125,10 @@ fn parse_opcode(line: &std::string::String, code: &mut Vec<(Op, Option<i32>)>) {
                  * when pushed.
                  */
                 Op::PushStr => {
-                    code.push((Op::Const, Some(0))); // null terminate
-                    for string in args[1..].to_vec().iter().rev() {
-                        code.push((Op::Const, Some(' ' as i32)));
+                    for (i, string) in args[1..].to_vec().iter().rev().enumerate() {
+                        if i > 0 {
+                            code.push((Op::Const, Some(' ' as i32)));
+                        }
                         for c in string.chars().rev() {
                             code.push((Op::Const, Some(c as i32)));
                         }
