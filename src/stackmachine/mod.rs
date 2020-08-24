@@ -8,14 +8,12 @@ pub mod function;
 pub mod reader;
 
 pub use crate::stackmachine::builder::Builder;
-pub use crate::stackmachine::function::Function;
 pub use crate::stackmachine::function::Op;
 
 pub struct StackMachine {
     pub stack: Vec<i32>,
     pub memory: Vec<u8>,
-    pub ext_functions: Vec<Function>,
-    pub ext_functions_: HashMap<String, Function>,
+    pub ext_functions: HashMap<String, fn(&mut Vec<i32>)>,
     pub function_table: HashMap<String, Vec<(Op, Option<i32>)>>,
     pub pid: u16,
     pub child_pid: u16,
@@ -55,10 +53,6 @@ impl StackMachine {
         self.push(a / b);
     }
 
-    pub fn call_func_ext(&mut self, fn_id: u8) {
-        (self.ext_functions[fn_id as usize])(&mut self.stack);
-    }
-
     pub fn collect_str(&mut self) -> String {
         let mut res = String::new();
         loop {
@@ -78,8 +72,7 @@ impl StackMachine {
         StackMachine {
             stack: Vec::<i32>::new(),
             memory: Vec::with_capacity(memsize as usize),
-            ext_functions: Vec::<Function>::new(),
-            ext_functions_: HashMap::<String, Function>::new(),
+            ext_functions: HashMap::<String, fn(&mut Vec<i32>)>::new(),
             function_table: HashMap::<String, Vec<(Op, Option<i32>)>>::new(),
             pid: 0,
             child_pid: 0,
@@ -353,7 +346,13 @@ impl StackMachine {
 
                 // Call external function described in-code
                 Op::CallExt => {
-                    self.call_func_ext(arg.unwrap() as u8);
+                    let key = self.collect_str();
+                    if self.ext_functions.contains_key(&key) {
+                        (self.ext_functions.get(&key).unwrap())(&mut self.stack);
+                    }
+                    else {
+                        panic!("External function {} was called, but no definition could be found.", key);
+                    }
                 }
                 Op::PrintStr => {
                     let s = self.collect_str();

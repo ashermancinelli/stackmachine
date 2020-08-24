@@ -4,7 +4,6 @@ pub mod stackmachine;
 pub mod tests {
 
     use super::stackmachine::builder::Builder;
-    use super::stackmachine::function::Function;
     use super::stackmachine::function::Op;
     use super::stackmachine::reader;
     use super::stackmachine::StackMachine;
@@ -93,7 +92,6 @@ pub mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_fork_branch() {
         let mut sm = StackMachine::new(2u32.pow(8));
 
@@ -208,20 +206,124 @@ pub mod tests {
     }
 
     #[test]
+    fn test_function_table() {
+        let mut sm = StackMachine::new(2u32);
+
+        sm.function_table.insert(
+            "fn".to_string(),
+            vec![(Op::Add, None)]
+            );
+
+        sm.execute(vec![
+            (Op::Const, Some(3i32)),
+            (Op::Const, Some(2i32)),
+            (Op::Const, Some(0i32)), // Char codes for 'fn'
+            (Op::Const, Some(110i32)),
+            (Op::Const, Some(102i32)),
+            (Op::Call, None), // External adding func
+        ]);
+
+        assert_eq!(Some(2 + 3), sm.pop());
+    }
+
+    #[test]
+    fn test_fn_define() {
+        let mut sm = StackMachine::new(2u32);
+
+        sm.execute(vec![
+            (Op::Const, Some(0i32)), // Char codes for 'fn'
+            (Op::Const, Some(110i32)),
+            (Op::Const, Some(102i32)),
+            (Op::Function, None), // start function definition
+            (Op::Add, None),
+            (Op::EndFunction, None),
+        ]);
+
+        assert!(sm.function_table.contains_key("fn"));
+    }
+
+    #[test]
+    fn test_fn_call() {
+        let mut sm = StackMachine::new(2u32);
+
+        sm.execute(vec![
+            (Op::Const, Some(0i32)), // Char codes for 'fn'
+            (Op::Const, Some(110i32)),
+            (Op::Const, Some(102i32)),
+            (Op::Function, None), // start function definition
+            (Op::Add, None),
+            (Op::EndFunction, None),
+            (Op::Const, Some(1i32)), // arguments to function `fn`
+            (Op::Const, Some(2i32)),
+            (Op::Const, Some(0i32)), // Char codes for 'fn'
+            (Op::Const, Some(110i32)),
+            (Op::Const, Some(102i32)),
+            (Op::Call, None), // Call function
+        ]);
+
+        assert!(sm.function_table.contains_key("fn"));
+        assert_eq!(sm.last(), Some(1 + 2));
+    }
+
+    fn sum_n(stack: &mut Vec<i32>) {
+        if let Some(mut nargs) = stack.pop() {
+            let mut total = 0;
+            while nargs > 0 {
+                match stack.pop() {
+                    Some(v) => {
+                        total += v;
+                    }
+                    None => {
+                        stack.push(-1);
+                        return;
+                    }
+                }
+                nargs -= 1;
+            }
+            stack.push(total);
+        } else {
+            stack.push(-1);
+        }
+    }
+
+    #[test]
+    fn test_ext_fn_call() {
+        let mut sm = StackMachine::new(2u32);
+
+        sm.ext_functions.insert(
+            "sum_n".to_string(),
+            sum_n
+            );
+
+        sm.execute(vec![
+            (Op::Const, Some(2)),
+            (Op::Const, Some(2)),
+            (Op::Const, Some(3)), // previous 3 values are to be summed
+            (Op::Const, Some(3)), // number of values to sum
+            (Op::Const, Some(0)), // Char codes for `sum_n`
+            (Op::Const, Some(110)),
+            (Op::Const, Some(95)),
+            (Op::Const, Some(109)),
+            (Op::Const, Some(117)),
+            (Op::Const, Some(115)),
+            (Op::CallExt, None), // External summing func
+        ]);
+
+        assert_eq!(sm.last(), Some(3 + 2 + 2));
+    }
+
+    #[test]
     #[ignore]
     /*
      * Will have to deal with strings to test how this is parsed into each
      * individual `const` call
      */
-    fn test_pushstr() {}
-
-    #[test]
-    #[ignore]
-    /*
-     * test defining an external function and binding it to a value in the
-     * function table
-     */
-    fn test_ext_function_() {}
+    fn test_pushstr() {
+        let _code = r#"
+        # Push the string onto the stack
+        pushstr abc
+        "#;
+    }
 
     #[test]
     #[ignore]
